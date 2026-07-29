@@ -803,15 +803,15 @@ tailwind.config = {
 
         <!-- Mapa corporal interativo -->
         <div class="card p-4">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
-            <div style="font-size:13px;font-weight:700;color:#e2e4f0;">Parte do Corpo Atingida</div>
-            <select id="body-col-select" class="input" style="width:auto;font-size:11px;padding:3px 6px;" onchange="updateBodyMap()"></select>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#e2e4f0;">Parte do Corpo Atingida</div>
+              <div style="font-size:10px;color:#8b90b8;margin-top:1px;" id="body-col-label">Detecção automática</div>
+            </div>
           </div>
-          <div id="body-map-container" style="display:flex;gap:10px;align-items:flex-start;height:220px;">
-            <!-- SVG body will be injected here -->
+          <div id="body-map-container" style="display:flex;gap:10px;align-items:flex-start;height:230px;">
             <div id="body-svg-wrap" style="flex-shrink:0;height:100%;display:flex;align-items:center;justify-content:center;"></div>
-            <!-- Legend -->
-            <div id="body-legend" style="flex:1;font-size:10px;overflow-y:auto;max-height:220px;"></div>
+            <div id="body-legend" style="flex:1;font-size:10px;overflow-y:auto;max-height:230px;"></div>
           </div>
         </div>
 
@@ -1608,61 +1608,59 @@ function buildKPIs() {
   const grid = document.getElementById('kpi-grid');
   grid.innerHTML = '';
 
-  // Use config cols if set, else auto-detect first 4 numeric
   const top4 = (panelConfig.kpi.length ? panelConfig.kpi : state.numCols).slice(0,4);
-  if (!top4.length) { grid.innerHTML = '<div style="color:#8b90b8;font-size:13px;grid-column:1/-1;">Nenhuma coluna numérica detectada.</div>'; return; }
+  if (!top4.length) {
+    grid.innerHTML = '<div style="color:#8b90b8;font-size:13px;grid-column:1/-1;">Nenhuma coluna numérica detectada.</div>';
+    return;
+  }
+
+  const source = state.filtered.length ? state.filtered : state.raw;
 
   top4.forEach((col, i) => {
-    const vals = state.raw.map(r => getNum(r, col)).filter(v => !isNaN(v));
-    const sum = vals.reduce((a,b)=>a+b,0);
+    const vals = source.map(r => getNum(r, col)).filter(v => !isNaN(v) && v !== 0);
+    const sum = vals.reduce((a,b) => a+b, 0);
     const avg = vals.length ? sum/vals.length : 0;
     const max = vals.length ? Math.max(...vals) : 0;
-    const min = vals.length ? Math.min(...vals) : 0;
 
-    // Compute half-period delta
-    const half = Math.floor(state.raw.length/2);
-    const sum1 = state.raw.slice(0,half).map(r=>getNum(r,col)).reduce((a,b)=>a+b,0);
-    const sum2 = state.raw.slice(half).map(r=>getNum(r,col)).reduce((a,b)=>a+b,0);
-    const delta = sum1 ? ((sum2-sum1)/Math.abs(sum1)*100) : 0;
-    const deltaDir = delta >= 0;
+    // Period comparison: last 30% vs previous 30%
+    const n = source.length;
+    const sliceSz = Math.max(1, Math.floor(n * 0.3));
+    const recent = source.slice(-sliceSz).map(r => getNum(r,col)).reduce((a,b)=>a+b,0);
+    const prev   = source.slice(-sliceSz*2, -sliceSz).map(r => getNum(r,col)).reduce((a,b)=>a+b,0);
+    const delta  = prev > 0 ? ((recent - prev) / Math.abs(prev) * 100) : 0;
+    const up     = delta >= 0;
 
+    // HSE-aware label: se o indicador for "acidente", "lesão", queda = bom quando desce
+    const isRisk = /acident|lesão|lesao|incident|afasta|queda|perda|dias|gravidade|frequencia|frequência/i.test(col);
+    const trendGood  = isRisk ? !up : up;
+    const trendColor = Math.abs(delta) < 1 ? '#8b90b8' : trendGood ? '#34d399' : '#f87171';
+    const trendIcon  = Math.abs(delta) < 1 ? '→' : up ? '↑' : '↓';
+
+    // Icon per position
     const icons = [
-      `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
-      `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
-      `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
-      `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`
+      `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+      `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>`,
+      `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+      `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
     ];
 
     const card = document.createElement('div');
     card.className = 'kpi-card p-4';
     card.innerHTML = `
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;">
-        <div style="font-size:11px;font-weight:600;color:#8b90b8;text-transform:uppercase;letter-spacing:0.05em;flex:1;word-break:break-all;">${col}</div>
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-          <div class="help-btn" tabindex="0" onclick="this.classList.toggle('active')" style="position:relative;">?
-            <div class="help-popup ${i>=2?'left':''}">
-              <div class="help-popup-title">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${PALETTE[i]}" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                KPI — ${col}
-              </div>
-              <p>Este cartão resume os principais indicadores da coluna <strong>${col}</strong> em todos os registros carregados.</p>
-              <div class="tip-row"><div class="tip-dot" style="background:${PALETTE[i]};"></div><div><strong>Valor principal (grande)</strong> — soma total de todos os registros.</div></div>
-              <div class="tip-row"><div class="tip-dot" style="background:#a78bfa;"></div><div><strong>Média</strong> — valor médio por linha. <strong>Máx</strong> — o maior valor individual encontrado.</div></div>
-              <div class="tip-row"><div class="tip-dot" style="background:${deltaDir?'#34d399':'#f87171'};"></div><div><strong>Variação % vs período anterior</strong> — compara a soma da segunda metade dos dados com a primeira metade. ${deltaDir?'↑ Crescimento':'↓ Queda'} de ${Math.abs(delta).toFixed(1)}%.</div></div>
-            </div>
-          </div>
-          <div style="width:34px;height:34px;border-radius:10px;background:${PALETTE_ALPHA(i,0.12)};display:flex;align-items:center;justify-content:center;color:${PALETTE[i]};">
-            ${icons[i]}
-          </div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-size:10px;font-weight:700;color:#8b90b8;text-transform:uppercase;letter-spacing:0.06em;flex:1;line-height:1.3;padding-right:8px;">${col}</div>
+        <div style="width:36px;height:36px;border-radius:10px;background:${PALETTE_ALPHA(i,0.15)};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:${PALETTE[i]};">
+          ${icons[i]}
         </div>
       </div>
-      <div style="font-size:22px;font-weight:800;color:#e2e4f0;margin-bottom:4px;font-family:'JetBrains Mono',monospace;">${fmtShort(sum)}</div>
-      <div style="font-size:11px;color:#4a4f6e;margin-bottom:8px;">Total  ·  Média: ${fmtShort(avg)}  ·  Máx: ${fmtShort(max)}</div>
+      <div style="font-size:28px;font-weight:900;color:#e2e4f0;margin-bottom:2px;font-family:'JetBrains Mono',monospace;line-height:1;">${fmtShort(sum)}</div>
+      <div style="font-size:10px;color:#4a4f6e;margin-bottom:10px;">
+        Total de registros · Média: <b style="color:#8b90b8;">${fmt(avg,1)}</b> · Máx: <b style="color:#8b90b8;">${fmtShort(max)}</b>
+      </div>
+      <div style="height:1px;background:#1a1e35;margin-bottom:8px;"></div>
       <div style="display:flex;align-items:center;gap:6px;">
-        <span style="font-size:11px;font-weight:600;color:${deltaDir?'#34d399':'#f87171'};">
-          ${deltaDir?'↑':'↓'} ${Math.abs(delta).toFixed(1)}%
-        </span>
-        <span style="font-size:11px;color:#4a4f6e;">vs período anterior</span>
+        <span style="font-size:13px;font-weight:800;color:${trendColor};">${trendIcon} ${Math.abs(delta).toFixed(1)}%</span>
+        <span style="font-size:10px;color:#4a4f6e;">vs período anterior · ${vals.length} registros</span>
       </div>
     `;
     grid.appendChild(card);
@@ -1796,7 +1794,6 @@ function populateSelects() {
   const allOpts  = state.headers.map(c=>`<option value="${c}">${c}</option>`).join('');
 
   setOpts('dist-col-select', catOpts||numOpts);
-  setOpts('body-col-select', catOpts||numOpts);
   setOpts('dist2-col-select', catOpts.length > 1 ? catOpts.split('</option>').slice(1).join('</option>') || catOpts : catOpts||numOpts);
   setOpts('scatter-x', numOpts);
   setOpts('scatter-y', numOpts, 1);
@@ -3776,154 +3773,257 @@ const BODY_PART_LABELS = {
 };
 
 function updateBodyMap() {
-  const col = document.getElementById('body-col-select')?.value;
-  const container = document.getElementById('body-map-container');
-  if (!col || !state.raw.length || !container) return;
+  // Auto-detect body part column
+  const bodyKeywords = ['corpo','body','parte','lesão','lesao','membro','region','local','anatomia','affected'];
+  let col = null;
+
+  // First: try to find column whose name contains body-related keywords
+  for (const c of state.catCols) {
+    const lower = c.toLowerCase();
+    if (bodyKeywords.some(k => lower.includes(k))) { col = c; break; }
+  }
+
+  // Second: find column whose VALUES most match body part dictionary
+  if (!col) {
+    let bestScore = 0;
+    for (const c of state.catCols) {
+      const vals = state.raw.map(r => String(r[c] || '').toLowerCase());
+      const score = vals.filter(v => Object.keys(BODY_PARTS_MAP).some(k => v.includes(k))).length;
+      if (score > bestScore) { bestScore = score; col = c; }
+    }
+  }
+
+  const label = document.getElementById('body-col-label');
+  const svgWrap = document.getElementById('body-svg-wrap');
+  const legend  = document.getElementById('body-legend');
+
+  if (!col || !state.raw.length) {
+    if (label) label.textContent = 'Nenhuma coluna de parte do corpo detectada';
+    if (svgWrap) svgWrap.innerHTML = `<div style="color:#4a4f6e;font-size:11px;text-align:center;padding:20px;">Adicione uma coluna<br>"Parte do Corpo" na planilha</div>`;
+    return;
+  }
+
+  if (label) label.textContent = `Coluna: ${col}`;
 
   const source = state.filtered.length ? state.filtered : state.raw;
 
-  // Count by body part
+  // Count hits per body part ID
   const counts = {};
+  let totalMapped = 0;
   source.forEach(r => {
     const val = String(r[col] || '').toLowerCase().trim();
     if (!val) return;
-    // Try direct match then partial match
     let partId = null;
-    for (const [keyword, id] of Object.entries(BODY_PARTS_MAP)) {
-      if (val === keyword || val.includes(keyword)) { partId = id; break; }
+    // Longest match first
+    const sorted = Object.keys(BODY_PARTS_MAP).sort((a,b) => b.length - a.length);
+    for (const kw of sorted) {
+      if (val === kw || val.includes(kw)) { partId = BODY_PARTS_MAP[kw]; break; }
     }
-    if (partId) counts[partId] = (counts[partId] || 0) + 1;
+    if (partId) { counts[partId] = (counts[partId] || 0) + 1; totalMapped++; }
   });
 
-  const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
+  const total = totalMapped || 1;
   const maxCount = Math.max(...Object.values(counts), 1);
 
-  // Color intensity function
   const getColor = (partId) => {
     const c = counts[partId] || 0;
-    if (c === 0) return '#1a1e35';
-    const intensity = c / maxCount;
-    if (intensity > 0.7) return '#ef4444';
-    if (intensity > 0.4) return '#f97316';
-    if (intensity > 0.2) return '#fbbf24';
+    if (c === 0) return '#1e2235';
+    const pct = c / maxCount;
+    if (pct >= 0.75) return '#ef4444';
+    if (pct >= 0.45) return '#f97316';
+    if (pct >= 0.20) return '#fbbf24';
     return '#34d399';
   };
-
-  const getOpacity = (partId) => {
+  const getStroke = (partId) => counts[partId] ? '#fff' : '#2c3155';
+  const getOpacity = (partId) => counts[partId] ? 1 : 0.25;
+  const glow = (partId) => counts[partId] > 0 ? 'filter="url(#hse-glow)"' : '';
+  const badge = (partId, cx, cy) => {
     const c = counts[partId] || 0;
-    return c === 0 ? 0.3 : 0.7 + (c / maxCount) * 0.3;
+    if (!c) return '';
+    return `<circle cx="${cx}" cy="${cy}" r="7" fill="${getColor(partId)}" stroke="#0d0f1c" stroke-width="1.5"/>
+            <text x="${cx}" y="${cy+3.5}" text-anchor="middle" font-size="7" font-weight="800" fill="white" style="pointer-events:none;">${c}</text>`;
   };
 
-  // Build SVG body
-  const svgWrap = document.getElementById('body-svg-wrap');
+  // ── More anatomically realistic SVG body ──────────────────
   svgWrap.innerHTML = `
-    <svg viewBox="0 0 120 280" width="90" height="210" style="overflow:visible;">
-      <defs>
-        <filter id="glow"><feGaussianBlur stdDeviation="2" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      </defs>
+<svg viewBox="0 0 130 310" width="100" height="238" style="overflow:visible;">
+  <defs>
+    <filter id="hse-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <radialGradient id="skin-base" cx="50%" cy="40%">
+      <stop offset="0%" stop-color="#2a2040"/>
+      <stop offset="100%" stop-color="#1a1530"/>
+    </radialGradient>
+  </defs>
 
-      <!-- HEAD -->
-      <ellipse id="bp-head" cx="60" cy="22" rx="16" ry="20"
-        fill="${getColor('head')}" opacity="${getOpacity('head')}" stroke="#2c3155" stroke-width="1"
-        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('head')"
-        ${counts['head'] ? 'filter="url(#glow)"' : ''}/>
-      <!-- NECK -->
-      <rect id="bp-neck" x="54" y="41" width="12" height="10" rx="3"
-        fill="${getColor('neck')}" opacity="${getOpacity('neck')}" stroke="#2c3155" stroke-width="1"
-        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('neck')"/>
-      <!-- TORSO -->
-      <path id="bp-torso" d="M36 52 Q32 90 35 130 L85 130 Q88 90 84 52 Q72 48 60 48 Q48 48 36 52Z"
-        fill="${getColor('torso')}" opacity="${getOpacity('torso')}" stroke="#2c3155" stroke-width="1"
-        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('torso')"
-        ${counts['torso'] ? 'filter="url(#glow)"' : ''}/>
-      <!-- BACK overlay indicator -->
-      ${counts['back'] ? `<path d="M36 52 Q32 90 35 130 L85 130 Q88 90 84 52 Q72 48 60 48 Q48 48 36 52Z" fill="none" stroke="${getColor('back')}" stroke-width="3" opacity="0.8"/>` : ''}
-      <!-- LEFT SHOULDER -->
-      <ellipse id="bp-shoulder-l" cx="31" cy="58" rx="10" ry="8"
-        fill="${getColor('shoulder-l')}" opacity="${getOpacity('shoulder-l')}" stroke="#2c3155" stroke-width="1"
-        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('shoulder-l')"
-        ${counts['shoulder-l'] ? 'filter="url(#glow)"' : ''}/>
-      <ellipse cx="89" cy="58" rx="10" ry="8"
-        fill="${getColor('shoulder-l')}" opacity="${getOpacity('shoulder-l')}" stroke="#2c3155" stroke-width="1"/>
-      <!-- LEFT ARM -->
-      <rect id="bp-arm-l" x="18" y="65" width="14" height="45" rx="6"
-        fill="${getColor('arm-l')}" opacity="${getOpacity('arm-l')}" stroke="#2c3155" stroke-width="1"
-        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('arm-l')"
-        ${counts['arm-l'] ? 'filter="url(#glow)"' : ''}/>
-      <rect x="88" y="65" width="14" height="45" rx="6"
-        fill="${getColor('arm-l')}" opacity="${getOpacity('arm-l')}" stroke="#2c3155" stroke-width="1"/>
-      <!-- LEFT FOREARM -->
-      <rect id="bp-forearm-l" x="19" y="112" width="12" height="38" rx="5"
-        fill="${getColor('forearm-l')}" opacity="${getOpacity('forearm-l')}" stroke="#2c3155" stroke-width="1"
-        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('forearm-l')"
-        ${counts['forearm-l'] ? 'filter="url(#glow)"' : ''}/>
-      <rect x="89" y="112" width="12" height="38" rx="5"
-        fill="${getColor('forearm-l')}" opacity="${getOpacity('forearm-l')}" stroke="#2c3155" stroke-width="1"/>
-      <!-- LEFT HAND -->
-      <ellipse id="bp-hand-l" cx="25" cy="160" rx="9" ry="12"
-        fill="${getColor('hand-l')}" opacity="${getOpacity('hand-l')}" stroke="#2c3155" stroke-width="1"
-        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('hand-l')"
-        ${counts['hand-l'] ? 'filter="url(#glow)"' : ''}/>
-      <ellipse cx="95" cy="160" rx="9" ry="12"
-        fill="${getColor('hand-l')}" opacity="${getOpacity('hand-l')}" stroke="#2c3155" stroke-width="1"/>
-      <!-- LEFT LEG (thigh) -->
-      <rect id="bp-leg-l" x="38" y="132" width="18" height="55" rx="7"
-        fill="${getColor('leg-l')}" opacity="${getOpacity('leg-l')}" stroke="#2c3155" stroke-width="1"
-        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('leg-l')"
-        ${counts['leg-l'] ? 'filter="url(#glow)"' : ''}/>
-      <rect x="64" y="132" width="18" height="55" rx="7"
-        fill="${getColor('leg-l')}" opacity="${getOpacity('leg-l')}" stroke="#2c3155" stroke-width="1"/>
-      <!-- KNEES -->
-      <ellipse id="bp-knee-l" cx="47" cy="189" rx="10" ry="7"
-        fill="${getColor('knee-l')}" opacity="${getOpacity('knee-l')}" stroke="#2c3155" stroke-width="1"
-        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('knee-l')"
-        ${counts['knee-l'] ? 'filter="url(#glow)"' : ''}/>
-      <ellipse cx="73" cy="189" rx="10" ry="7"
-        fill="${getColor('knee-l')}" opacity="${getOpacity('knee-l')}" stroke="#2c3155" stroke-width="1"/>
-      <!-- LOWER LEGS -->
-      <rect id="bp-lleg-l" x="39" y="196" width="16" height="48" rx="6"
-        fill="${getColor('lleg-l')}" opacity="${getOpacity('lleg-l')}" stroke="#2c3155" stroke-width="1"
-        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('lleg-l')"
-        ${counts['lleg-l'] ? 'filter="url(#glow)"' : ''}/>
-      <rect x="65" y="196" width="16" height="48" rx="6"
-        fill="${getColor('lleg-l')}" opacity="${getOpacity('lleg-l')}" stroke="#2c3155" stroke-width="1"/>
-      <!-- FEET -->
-      <ellipse id="bp-foot-l" cx="47" cy="250" rx="13" ry="8"
-        fill="${getColor('foot-l')}" opacity="${getOpacity('foot-l')}" stroke="#2c3155" stroke-width="1"
-        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('foot-l')"
-        ${counts['foot-l'] ? 'filter="url(#glow)"' : ''}/>
-      <ellipse cx="73" cy="250" rx="13" ry="8"
-        fill="${getColor('foot-l')}" opacity="${getOpacity('foot-l')}" stroke="#2c3155" stroke-width="1"/>
+  <!-- ═══ HEAD ═══ -->
+  <!-- Neck -->
+  <path d="M57 58 Q57 68 56 74 L74 74 Q73 68 73 58Z"
+    fill="${getColor('neck')}" opacity="${getOpacity('neck')}" stroke="${getStroke('neck')}" stroke-width="0.8"
+    style="cursor:pointer;" onclick="highlightPart('neck')" ${glow('neck')}/>
+  <!-- Head skull -->
+  <ellipse cx="65" cy="32" rx="20" ry="24"
+    fill="${getColor('head')}" opacity="${getOpacity('head')}" stroke="${getStroke('head')}" stroke-width="0.8"
+    style="cursor:pointer;" onclick="highlightPart('head')" ${glow('head')}/>
+  <!-- Jaw -->
+  <path d="M46 38 Q47 58 65 60 Q83 58 84 38"
+    fill="${getColor('head')}" opacity="${getOpacity('head')}" stroke="${getStroke('head')}" stroke-width="0.8"
+    style="cursor:pointer;" onclick="highlightPart('head')"/>
+  <!-- Eyes suggestion -->
+  <ellipse cx="57" cy="29" rx="3.5" ry="2.5" fill="#0d0f1c" opacity="0.6"/>
+  <ellipse cx="73" cy="29" rx="3.5" ry="2.5" fill="#0d0f1c" opacity="0.6"/>
+  <!-- Nose suggestion -->
+  <path d="M63 33 Q65 38 67 33" stroke="#0d0f1c" stroke-width="0.8" fill="none" opacity="0.4"/>
+  <!-- Mouth suggestion -->
+  <path d="M60 42 Q65 45 70 42" stroke="#0d0f1c" stroke-width="0.8" fill="none" opacity="0.4"/>
+  <!-- Ear left -->
+  <ellipse cx="45" cy="33" rx="3.5" ry="5"
+    fill="${getColor('head')}" opacity="${getOpacity('head')}" stroke="${getStroke('head')}" stroke-width="0.8"/>
+  <!-- Ear right -->
+  <ellipse cx="85" cy="33" rx="3.5" ry="5"
+    fill="${getColor('head')}" opacity="${getOpacity('head')}" stroke="${getStroke('head')}" stroke-width="0.8"/>
 
-      <!-- Count labels on hot spots -->
-      ${Object.entries(counts).map(([partId, count]) => {
-        const positions = {
-          'head': [60,22], 'neck': [60,47], 'torso': [60,90], 'back': [60,90],
-          'shoulder-l': [31,58], 'arm-l': [25,88], 'forearm-l': [25,131],
-          'hand-l': [25,160], 'leg-l': [47,159], 'knee-l': [47,189],
-          'lleg-l': [47,220], 'foot-l': [47,250],
-        };
-        const pos = positions[partId];
-        if (!pos) return '';
-        return `<text x="${pos[0]}" y="${pos[1]+4}" text-anchor="middle" font-size="8" font-weight="bold" fill="white" style="pointer-events:none;">${count}</text>`;
-      }).join('')}
-    </svg>
-  `;
+  <!-- ═══ TORSO ═══ -->
+  <!-- Shoulders -->
+  <path d="M56 74 Q40 74 33 84 L38 92 Q44 83 56 82Z"
+    fill="${getColor('shoulder-l')}" opacity="${getOpacity('shoulder-l')}" stroke="${getStroke('shoulder-l')}" stroke-width="0.8"
+    style="cursor:pointer;" onclick="highlightPart('shoulder-l')" ${glow('shoulder-l')}/>
+  <path d="M74 74 Q90 74 97 84 L92 92 Q86 83 74 82Z"
+    fill="${getColor('shoulder-l')}" opacity="${getOpacity('shoulder-l')}" stroke="${getStroke('shoulder-l')}" stroke-width="0.8"
+    style="cursor:pointer;" onclick="highlightPart('shoulder-l')"/>
+  <!-- Chest/torso -->
+  <path d="M56 80 Q44 82 38 92 L36 140 Q36 150 45 155 L65 158 L85 155 Q94 150 94 140 L92 92 Q86 82 74 80 Q70 78 65 78 Q60 78 56 80Z"
+    fill="${getColor('torso')}" opacity="${getOpacity('torso')}" stroke="${getStroke('torso')}" stroke-width="0.8"
+    style="cursor:pointer;" onclick="highlightPart('torso')" ${glow('torso')}/>
+  <!-- Clavicle lines -->
+  <path d="M56 80 Q60 77 65 76 Q70 77 74 80" stroke="#0d0f1c" stroke-width="0.8" fill="none" opacity="0.4"/>
+  <!-- Chest center line -->
+  <line x1="65" y1="82" x2="65" y2="140" stroke="#0d0f1c" stroke-width="0.6" opacity="0.3"/>
+  <!-- Navel suggestion -->
+  <circle cx="65" cy="142" r="2" fill="#0d0f1c" opacity="0.3"/>
+  <!-- Back overlay indicator -->
+  ${counts['back'] ? `<path d="M56 80 Q44 82 38 92 L36 140 Q36 150 45 155 L65 158 L85 155 Q94 150 94 140 L92 92 Q86 82 74 80Z" fill="none" stroke="${getColor('back')}" stroke-width="3" opacity="0.7" stroke-dasharray="4,2"/>` : ''}
 
-  // Legend
-  const legend = document.getElementById('body-legend');
+  <!-- ═══ ARMS ═══ -->
+  <!-- Upper arm L -->
+  <path d="M38 92 Q26 96 22 114 Q22 120 26 124 L36 122 Q38 112 40 100Z"
+    fill="${getColor('arm-l')}" opacity="${getOpacity('arm-l')}" stroke="${getStroke('arm-l')}" stroke-width="0.8"
+    style="cursor:pointer;" onclick="highlightPart('arm-l')" ${glow('arm-l')}/>
+  <!-- Upper arm R -->
+  <path d="M92 92 Q104 96 108 114 Q108 120 104 124 L94 122 Q92 112 90 100Z"
+    fill="${getColor('arm-l')}" opacity="${getOpacity('arm-l')}" stroke="${getStroke('arm-l')}" stroke-width="0.8"
+    style="cursor:pointer;" onclick="highlightPart('arm-l')"/>
+  <!-- Forearm L -->
+  <path d="M26 124 Q20 136 19 152 Q19 158 23 160 L32 158 Q34 146 36 132Z"
+    fill="${getColor('forearm-l')}" opacity="${getOpacity('forearm-l')}" stroke="${getStroke('forearm-l')}" stroke-width="0.8"
+    style="cursor:pointer;" onclick="highlightPart('forearm-l')" ${glow('forearm-l')}/>
+  <!-- Forearm R -->
+  <path d="M104 124 Q110 136 111 152 Q111 158 107 160 L98 158 Q96 146 94 132Z"
+    fill="${getColor('forearm-l')}" opacity="${getOpacity('forearm-l')}" stroke="${getStroke('forearm-l')}" stroke-width="0.8"
+    style="cursor:pointer;" onclick="highlightPart('forearm-l')"/>
+  <!-- Hand L -->
+  <path d="M19 158 Q15 165 14 174 Q14 180 19 182 Q24 183 30 180 Q34 178 34 170 Q34 164 30 160Z"
+    fill="${getColor('hand-l')}" opacity="${getOpacity('hand-l')}" stroke="${getStroke('hand-l')}" stroke-width="0.8"
+    style="cursor:pointer;" onclick="highlightPart('hand-l')" ${glow('hand-l')}/>
+  <!-- Fingers L -->
+  <path d="M14 174 Q12 178 12 183 M18 175 Q16 180 16 186 M22 175 Q21 181 21 187 M26 175 Q26 180 27 185"
+    stroke="${getColor('hand-l')}" stroke-width="3" stroke-linecap="round" fill="none" opacity="${getOpacity('hand-l')}"/>
+  <!-- Hand R -->
+  <path d="M111 158 Q115 165 116 174 Q116 180 111 182 Q106 183 100 180 Q96 178 96 170 Q96 164 100 160Z"
+    fill="${getColor('hand-l')}" opacity="${getOpacity('hand-l')}" stroke="${getStroke('hand-l')}" stroke-width="0.8"
+    style="cursor:pointer;" onclick="highlightPart('hand-l')"/>
+  <!-- Fingers R -->
+  <path d="M116 174 Q118 178 118 183 M112 175 Q114 180 114 186 M108 175 Q109 181 109 187 M104 175 Q104 180 103 185"
+    stroke="${getColor('hand-l')}" stroke-width="3" stroke-linecap="round" fill="none" opacity="${getOpacity('hand-l')}"/>
+
+  <!-- ═══ LOWER BODY ═══ -->
+  <!-- Hips/waist -->
+  <path d="M45 155 Q40 162 39 170 L91 170 Q90 162 85 155Z"
+    fill="${getColor('torso')}" opacity="${getOpacity('torso')}" stroke="${getStroke('torso')}" stroke-width="0.8"/>
+  <!-- Thigh L -->
+  <path d="M39 170 Q34 178 34 205 Q34 218 40 222 L55 222 Q60 216 60 200 Q60 182 58 170Z"
+    fill="${getColor('leg-l')}" opacity="${getOpacity('leg-l')}" stroke="${getStroke('leg-l')}" stroke-width="0.8"
+    style="cursor:pointer;" onclick="highlightPart('leg-l')" ${glow('leg-l')}/>
+  <!-- Thigh R -->
+  <path d="M91 170 Q96 178 96 205 Q96 218 90 222 L75 222 Q70 216 70 200 Q70 182 72 170Z"
+    fill="${getColor('leg-l')}" opacity="${getOpacity('leg-l')}" stroke="${getStroke('leg-l')}" stroke-width="0.8"
+    style="cursor:pointer;" onclick="highlightPart('leg-l')"/>
+  <!-- Knee L -->
+  <ellipse cx="47" cy="223" rx="13" ry="9"
+    fill="${getColor('knee-l')}" opacity="${getOpacity('knee-l')}" stroke="${getStroke('knee-l')}" stroke-width="0.8"
+    style="cursor:pointer;" onclick="highlightPart('knee-l')" ${glow('knee-l')}/>
+  <!-- Knee R -->
+  <ellipse cx="83" cy="223" rx="13" ry="9"
+    fill="${getColor('knee-l')}" opacity="${getOpacity('knee-l')}" stroke="${getStroke('knee-l')}" stroke-width="0.8"
+    style="cursor:pointer;" onclick="highlightPart('knee-l')"/>
+  <!-- Lower leg L (shin) -->
+  <path d="M34 232 Q32 248 33 265 Q34 274 40 277 L54 277 Q58 272 58 262 Q58 244 60 232Z"
+    fill="${getColor('lleg-l')}" opacity="${getOpacity('lleg-l')}" stroke="${getStroke('lleg-l')}" stroke-width="0.8"
+    style="cursor:pointer;" onclick="highlightPart('lleg-l')" ${glow('lleg-l')}/>
+  <!-- Calf muscle L -->
+  <path d="M34 232 Q28 244 30 258 Q31 266 34 268" stroke="#0d0f1c" stroke-width="0.6" fill="none" opacity="0.3"/>
+  <!-- Lower leg R -->
+  <path d="M96 232 Q98 248 97 265 Q96 274 90 277 L76 277 Q72 272 72 262 Q72 244 70 232Z"
+    fill="${getColor('lleg-l')}" opacity="${getOpacity('lleg-l')}" stroke="${getStroke('lleg-l')}" stroke-width="0.8"
+    style="cursor:pointer;" onclick="highlightPart('lleg-l')"/>
+  <!-- Foot L -->
+  <path d="M33 273 Q28 278 27 285 Q27 291 33 293 Q42 295 52 292 Q58 290 58 284 L58 276Z"
+    fill="${getColor('foot-l')}" opacity="${getOpacity('foot-l')}" stroke="${getStroke('foot-l')}" stroke-width="0.8"
+    style="cursor:pointer;" onclick="highlightPart('foot-l')" ${glow('foot-l')}/>
+  <!-- Toes L -->
+  <path d="M27 287 Q24 290 24 294 M31 288 Q29 292 29 296 M36 288 Q35 293 35 297 M41 288 Q41 293 41 297 M46 288 Q47 292 47 296"
+    stroke="${getColor('foot-l')}" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="${getOpacity('foot-l')}"/>
+  <!-- Foot R -->
+  <path d="M97 273 Q102 278 103 285 Q103 291 97 293 Q88 295 78 292 Q72 290 72 284 L72 276Z"
+    fill="${getColor('foot-l')}" opacity="${getOpacity('foot-l')}" stroke="${getStroke('foot-l')}" stroke-width="0.8"
+    style="cursor:pointer;" onclick="highlightPart('foot-l')"/>
+  <!-- Toes R -->
+  <path d="M103 287 Q106 290 106 294 M99 288 Q101 292 101 296 M94 288 Q95 293 95 297 M89 288 Q89 293 89 297 M84 288 Q83 292 83 296"
+    stroke="${getColor('foot-l')}" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="${getOpacity('foot-l')}"/>
+
+  <!-- ═══ COUNT BADGES ═══ -->
+  ${badge('head',    65, 25)}
+  ${badge('neck',    65, 71)}
+  ${badge('torso',   65, 115)}
+  ${badge('back',    65, 130)}
+  ${badge('shoulder-l', 34, 86)}
+  ${badge('arm-l',   25, 108)}
+  ${badge('forearm-l', 22, 142)}
+  ${badge('hand-l',  20, 170)}
+  ${badge('leg-l',   43, 192)}
+  ${badge('knee-l',  47, 223)}
+  ${badge('lleg-l',  38, 252)}
+  ${badge('foot-l',  38, 287)}
+</svg>`;
+
+  // ── Legend sorted by count ──────────────────────────────────
   const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  legend.innerHTML = sorted.length === 0
-    ? '<div style="color:#4a4f6e;font-size:10px;padding:8px;">Nenhum dado de parte do corpo identificado na coluna selecionada.</div>'
-    : sorted.map(([partId, count]) => {
-        const pct = (count / total * 100).toFixed(1);
-        const color = getColor(partId);
-        return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-          <div style="width:10px;height:10px;border-radius:2px;background:${color};flex-shrink:0;"></div>
-          <div style="flex:1;font-size:10px;color:#c8cbdf;">${BODY_PART_LABELS[partId] || partId}</div>
-          <div style="font-size:10px;font-weight:700;color:${color};">${count} <span style="color:#4a4f6e;">(${pct}%)</span></div>
-        </div>`;
-      }).join('');
+  if (!sorted.length) {
+    legend.innerHTML = `<div style="color:#4a4f6e;font-size:10px;padding:8px;line-height:1.6;">
+      Nenhuma parte do corpo identificada.<br>
+      Verifique se a coluna "<b style="color:#e2e4f0;">${col}</b>" contém termos como:<br>
+      Mão, Cabeça, Perna, Costas, Braço...
+    </div>`;
+    return;
+  }
+
+  const allTotal = sorted.reduce((a, [,v]) => a + v, 0) || 1;
+  legend.innerHTML = sorted.map(([partId, count]) => {
+    const pct = (count / allTotal * 100).toFixed(1);
+    const color = getColor(partId);
+    const w = Math.round(count / sorted[0][1] * 100);
+    return `<div style="margin-bottom:7px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+        <span style="font-size:10px;color:#c8cbdf;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;">${BODY_PART_LABELS[partId] || partId}</span>
+        <span style="font-size:10px;font-weight:700;color:${color};margin-left:4px;">${count} <span style="color:#4a4f6e;">(${pct}%)</span></span>
+      </div>
+      <div style="height:4px;background:#1a1e35;border-radius:2px;overflow:hidden;">
+        <div style="height:100%;width:${w}%;background:${color};border-radius:2px;transition:width 0.4s;"></div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function highlightPart(partId) {

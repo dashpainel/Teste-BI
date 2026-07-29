@@ -3780,7 +3780,7 @@ function updateBodyMap() {
   // First: try to find column whose name contains body-related keywords
   for (const c of state.catCols) {
     const lower = c.toLowerCase();
-    if (bodyKeywords.some(k => lower.includes(k))) { col = c; break; }
+    if (bodyKeywords.some(k => lower.includes(k))) { col = k; break; }
   }
 
   // Second: find column whose VALUES most match body part dictionary

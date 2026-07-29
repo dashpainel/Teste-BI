@@ -2958,15 +2958,21 @@ function switchTab(tab) {
 
 // ── Refresh URL tab state from localStorage ───────────────────
 function refreshUrlTab() {
-  const saved   = localStorage.getItem(LS_URL_KEY) || '';
-  const autoRel = localStorage.getItem(LS_AUTORELOAD_KEY) === 'true';
+  const saved    = localStorage.getItem(LS_URL_KEY) || '';
+  const lastUrl  = localStorage.getItem('dashboards_last_url') || '';
+  const autoRel  = localStorage.getItem(LS_AUTORELOAD_KEY) === 'true';
+  const fillUrl  = saved || lastUrl;
 
-  // Populate input
-  if (saved) document.getElementById('url-input').value = saved;
+  // Pre-fill input with saved or last used URL
+  const input = document.getElementById('url-input');
+  if (fillUrl && input) {
+    input.value = fillUrl;
+    detectUrlType(fillUrl);
+  }
 
-  // Saved URL status badge
+  // Saved URL status badge (only if auto-reload is on)
   const statusEl = document.getElementById('saved-url-status');
-  if (saved) {
+  if (saved && autoRel) {
     statusEl.classList.remove('hidden');
     document.getElementById('saved-url-text').textContent = saved;
   } else {
@@ -3110,18 +3116,36 @@ function onGToken(resp) {
   const btn = document.getElementById('google-connect-btn');
   const lbl = document.getElementById('google-btn-label');
   if (resp.error) {
+    // Silent refresh failed — need manual login
     if (btn) btn.disabled = false;
     if (lbl) lbl.textContent = 'Entrar com Google';
+    window._pendingAutoReload = false;
+    // If there's a saved URL, pre-fill the field so user just needs to connect
+    const savedUrl = localStorage.getItem(LS_URL_KEY);
+    if (savedUrl) {
+      switchTab('url');
+      const input = document.getElementById('url-input');
+      if (input) { input.value = savedUrl; detectUrlType(savedUrl); }
+    }
     return;
   }
   gToken = resp.access_token;
-  // Fetch profile
+  // Mark that user has authorized — enables silent refresh on next visit
+  localStorage.setItem('dashboards_google_authed', '1');
+
+  // Fetch user profile
   fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
     headers: { Authorization: `Bearer ${gToken}` }
   }).then(r => r.json()).then(p => {
     gUser = { name: p.name || 'Usuário Google', email: p.email || '', picture: p.picture || '' };
     localStorage.setItem(LS_GUSER, JSON.stringify(gUser));
     renderGConnected();
+    // Auto-reload pending? Fire now that we have a token
+    if (window._pendingAutoReload) {
+      window._pendingAutoReload = false;
+      const savedUrl = localStorage.getItem(LS_URL_KEY);
+      if (savedUrl) setTimeout(() => loadFromUrl(savedUrl), 300);
+    }
   }).catch(() => {
     gUser = { name: 'Usuário Google', email: '', picture: '' };
     renderGConnected();
@@ -3148,6 +3172,8 @@ function googleSignOut() {
   if (gToken) { try { google.accounts.oauth2.revoke(gToken, ()=>{}); } catch(e){} }
   gToken = null; gUser = null;
   localStorage.removeItem(LS_GUSER);
+  localStorage.removeItem('dashboards_google_authed');
+  window._pendingAutoReload = false;
   document.getElementById('gauth-connected').style.display = 'none';
   document.getElementById('gauth-disconnected').style.display = 'block';
   document.getElementById('google-btn-label').textContent = 'Entrar com Google';
@@ -3155,30 +3181,61 @@ function googleSignOut() {
 }
 
 // ── GSI boot ──────────────────────────────────────────────────
+
+// ── GSI boot with silent reconnect ────────────────────────────
 function bootGSI() {
-  // Restore profile (no token persistence — must re-auth on reload)
+  // Restore saved profile (name/photo — not token)
   try {
     const saved = localStorage.getItem(LS_GUSER);
     if (saved) gUser = JSON.parse(saved);
-  } catch(e){}
+  } catch(e) {}
+
+  // Enable button immediately
+  const btn = document.getElementById('google-connect-btn');
+  if (btn) btn.disabled = false;
+
+  // Pre-fill client ID
+  const stored = localStorage.getItem(LS_GCLIENT) || DEFAULT_CLIENT_ID;
+  const inp = document.getElementById('client-id-input');
+  if (inp && stored) inp.value = stored;
+
+  const hasAuthorized = localStorage.getItem('dashboards_google_authed') === '1';
+  const savedUrl      = localStorage.getItem(LS_URL_KEY);
+  const autoReload    = localStorage.getItem(LS_AUTORELOAD_KEY) === 'true';
+  const isGoogleUrl   = savedUrl && /docs\.google\.com|drive\.google\.com/.test(savedUrl);
 
   const tryInit = () => {
     if (typeof google !== 'undefined' && google?.accounts?.oauth2) {
       initGSI();
+
+      if (hasAuthorized && gTokenClient) {
+        // Show profile chip immediately from cache
+        if (gUser) renderGConnected();
+
+        if (savedUrl && autoReload && isGoogleUrl) {
+          // Auto-reload needs token first — flag it and refresh silently
+          window._pendingAutoReload = true;
+          const lbl = document.getElementById('google-btn-label');
+          if (lbl) lbl.textContent = 'Reconectando…';
+          gTokenClient.requestAccessToken({ prompt: '' });
+        } else if (savedUrl && autoReload && !isGoogleUrl) {
+          // Non-Google URL — load directly without token
+          checkAutoReload();
+        } else {
+          // No auto-reload — silently pre-warm token in background
+          setTimeout(() => {
+            try { gTokenClient.requestAccessToken({ prompt: '' }); } catch(e) {}
+          }, 1000);
+        }
+      } else {
+        // First time — normal flow
+        checkAutoReload();
+      }
     } else {
       setTimeout(tryInit, 300);
     }
   };
   tryInit();
-
-  // Enable button immediately (clicking will trigger config if no clientId)
-  const btn = document.getElementById('google-connect-btn');
-  if (btn) btn.disabled = false;
-
-  // Pre-fill client ID input if stored
-  const stored = localStorage.getItem(LS_GCLIENT) || DEFAULT_CLIENT_ID;
-  const inp = document.getElementById('client-id-input');
-  if (inp && stored) inp.value = stored;
 }
 
 // ── Detect URL type & show smart hints ───────────────────────
@@ -3367,6 +3424,9 @@ async function loadFromUrl(override) {
 
     if (document.getElementById('auto-reload-toggle')?.checked) {
       localStorage.setItem(LS_URL_KEY, rawUrl);
+    } else {
+      // Always save last URL so field is pre-filled next time
+      localStorage.setItem('dashboards_last_url', rawUrl);
     }
     const badge = document.getElementById('url-source-badge');
     if (badge) { badge.classList.remove('hidden'); badge.style.display = 'flex'; }

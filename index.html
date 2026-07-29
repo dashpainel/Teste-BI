@@ -331,6 +331,12 @@ tailwind.config = {
     background-clip: text;
   }
 
+  /* Spin animation for loading */
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  /* Shimmer animation for skeleton loading */
+  @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
   /* Top glow */
   .top-glow {
     position: fixed; top: -200px; left: 30%; right: 30%;
@@ -457,11 +463,7 @@ tailwind.config = {
     </div>
   </div>
 
-  <div class="section-label">Principal</div>
-  <div onclick="showSection('upload')"    class="nav-link mx-2" id="nav-upload">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-    Importar Dados
-  </div>
+  <div class="section-label">Análise</div>
   <div onclick="showSection('dashboard')" class="nav-link mx-2" id="nav-dashboard">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
     Dashboard
@@ -483,19 +485,24 @@ tailwind.config = {
     Comparativos
   </div>
   <div onclick="showSection('forecast')"  class="nav-link mx-2" id="nav-forecast">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20 L7 14 L12 16 L17 8 L22 4"/><path d="M17 8 L22 4 L22 9" fill="currentColor" stroke="currentColor" stroke-width="1.5"/><path d="M19 13 Q20 11 22 13 Q20 15 19 13Z" fill="none" stroke="none"/><line x1="22" y1="13" x2="22" y2="20" stroke-dasharray="3 2"/><line x1="17" y1="20" x2="22" y2="20" stroke-dasharray="3 2"/></svg>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20 L7 14 L12 16 L17 8 L22 4"/><path d="M17 8 L22 4 L22 9" fill="currentColor" stroke="currentColor" stroke-width="1.5"/><line x1="22" y1="13" x2="22" y2="20" stroke-dasharray="3 2"/><line x1="17" y1="20" x2="22" y2="20" stroke-dasharray="3 2"/></svg>
     Projeção
   </div>
 
   <div class="flex-1"></div>
-  <div class="section-label">Exportar</div>
+
+  <div class="section-label">Dados</div>
+  <div onclick="showSection('upload')" class="nav-link mx-2" id="nav-upload">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Importar
+  </div>
   <button onclick="exportExcel()" class="nav-link mx-2 text-left w-auto" style="cursor:pointer;">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-    Excel
+    Exportar Excel
   </button>
   <button onclick="exportPDF()" class="nav-link mx-2 text-left w-auto" style="cursor:pointer;">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-    PDF
+    Exportar PDF
   </button>
 
   <div class="px-4 pt-3 pb-2 border-t" style="border-color:#1a1e35;">
@@ -733,42 +740,34 @@ tailwind.config = {
     <!-- ════ DASHBOARD SECTION ════ -->
     <section id="section-dashboard" class="hidden fade-in">
 
-      <!-- Config bar -->
-      <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:12px;">
-        <button onclick="openConfigModal()" class="btn btn-secondary" style="gap:6px;font-size:12px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg>
-          Configurar Painel
+      <!-- ── TOP BAR: filters + config ──────────────────────────── -->
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;color:#4a4f6e;text-transform:uppercase;letter-spacing:0.06em;margin-right:4px;">Filtrar:</div>
+        <div id="hse-quick-filters" style="display:flex;gap:6px;flex-wrap:wrap;flex:1;"></div>
+        <button onclick="clearHSEFilters()" class="btn btn-ghost" style="font-size:11px;padding:5px 10px;">✕ Limpar</button>
+        <button onclick="openConfigModal()" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;gap:5px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg>
+          Configurar
         </button>
       </div>
 
-      <!-- KPI Grid -->
-      <div id="kpi-grid" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6"></div>
+      <!-- ── KPI CARDS ROW ────────────────────────────────────────── -->
+      <div id="kpi-grid" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4"></div>
 
-      <!-- Charts row -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <!-- Main trend chart -->
+      <!-- ── HSE SPECIFIC KPIs (Taxa de Frequência, Gravidade etc) ── -->
+      <div id="hse-kpi-row" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4" style="display:none!important;"></div>
+
+      <!-- ── ROW 1: Evolução mensal + Distribuição por categoria ──── -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+
+        <!-- Evolução mensal (2/3) -->
         <div class="card card-glow p-4 md:col-span-2">
-          <div class="flex items-center justify-between mb-4">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div>
-                <div class="text-sm font-semibold" style="color:#e2e4f0;">Tendência ao Longo do Tempo</div>
-                <div class="text-xs mt-0.5" style="color:#8b90b8;" id="trend-subtitle">Série temporal dos principais indicadores</div>
-              </div>
-              <div class="help-btn" tabindex="0" onclick="this.classList.toggle('active')">?
-                <div class="help-popup up">
-                  <div class="help-popup-title">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4d7aff" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                    Tendência ao Longo do Tempo
-                  </div>
-                  <p>Exibe a <strong>evolução das métricas numéricas agrupadas por mês</strong>, permitindo visualizar padrões de crescimento, queda ou estabilidade ao longo do período.</p>
-                  <div class="tip-row"><div class="tip-dot" style="background:#4d7aff;"></div><div><strong>Linha</strong> — conecta os pontos mês a mês. Ideal para ver tendência contínua.</div></div>
-                  <div class="tip-row"><div class="tip-dot" style="background:#a78bfa;"></div><div><strong>Barra</strong> — compara volumes entre períodos. Facilita ver qual mês foi maior.</div></div>
-                  <div class="tip-row"><div class="tip-dot" style="background:#34d399;"></div><div><strong>Área</strong> — igual à linha, mas preenche o espaço abaixo. Realça o volume acumulado.</div></div>
-                  <p style="margin-top:8px;color:#8b90b8;">Dica: passe o mouse sobre os pontos para ver os valores exatos de cada período.</p>
-                </div>
-              </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#e2e4f0;">Evolução Mensal</div>
+              <div style="font-size:11px;color:#8b90b8;margin-top:2px;" id="trend-subtitle">Série temporal dos indicadores</div>
             </div>
-            <div class="flex gap-1">
+            <div style="display:flex;gap:4px;">
               <button class="chart-type-btn active" onclick="setTrendType('line',this)">Linha</button>
               <button class="chart-type-btn" onclick="setTrendType('bar',this)">Barra</button>
               <button class="chart-type-btn" onclick="setTrendType('area',this)">Área</button>
@@ -777,84 +776,108 @@ tailwind.config = {
           <div class="chart-wrap-lg"><canvas id="trendChart"></canvas></div>
         </div>
 
-        <!-- Distribution chart -->
+        <!-- Distribuição por categoria (1/3) -->
         <div class="card p-4">
-          <div class="flex items-center justify-between mb-4">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div class="text-sm font-semibold" style="color:#e2e4f0;">Distribuição por Categoria</div>
-              <div class="help-btn" tabindex="0" onclick="this.classList.toggle('active')">?
-                <div class="help-popup">
-                  <div class="help-popup-title">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4d7aff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-                    Distribuição por Categoria
-                  </div>
-                  <p>Mostra <strong>quantos registros existem em cada categoria</strong> da coluna selecionada no menu ao lado.</p>
-                  <div class="tip-row"><div class="tip-dot" style="background:#4d7aff;"></div><div>Para colunas de <strong>texto</strong>: conta a frequência de cada valor único (ex.: quantos acidentes por setor).</div></div>
-                  <div class="tip-row"><div class="tip-dot" style="background:#a78bfa;"></div><div>Para colunas <strong>numéricas</strong>: agrupa em faixas automáticas (histograma) e mostra a concentração dos valores.</div></div>
-                  <p style="margin-top:8px;color:#8b90b8;">Use o seletor para trocar a coluna analisada em tempo real.</p>
-                </div>
-              </div>
-            </div>
-            <select id="dist-col-select" class="input" style="width:auto;font-size:12px;padding:4px 8px;" onchange="updateDistChart()"></select>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:6px;">
+            <div style="font-size:13px;font-weight:700;color:#e2e4f0;">Por Categoria</div>
+            <select id="dist-col-select" class="input" style="width:auto;font-size:11px;padding:3px 6px;" onchange="updateDistChart()"></select>
           </div>
-          <div class="chart-wrap"><canvas id="distChart"></canvas></div>
+          <div class="chart-wrap-lg"><canvas id="distChart"></canvas></div>
         </div>
+      </div>
 
-        <!-- Composition chart -->
+      <!-- ── ROW 2: Composição + Segundo gráfico de categoria + Scatter ── -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+
+        <!-- Composição rosca -->
         <div class="card p-4">
-          <div class="flex items-center justify-between mb-4">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div class="text-sm font-semibold" style="color:#e2e4f0;">Composição</div>
-              <div class="help-btn" tabindex="0" onclick="this.classList.toggle('active')">?
-                <div class="help-popup left">
-                  <div class="help-popup-title">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4d7aff" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
-                    Composição
-                  </div>
-                  <p>Exibe a <strong>participação percentual de cada categoria</strong> no total da primeira métrica numérica detectada nos dados.</p>
-                  <div class="tip-row"><div class="tip-dot" style="background:#4d7aff;"></div><div><strong>Rosca</strong> — anel com espaço central. Facilita leitura das fatias individuais.</div></div>
-                  <div class="tip-row"><div class="tip-dot" style="background:#a78bfa;"></div><div><strong>Pizza</strong> — disco completo. Enfatiza a proporção visual entre as partes.</div></div>
-                  <p style="margin-top:8px;color:#8b90b8;">Limitado ao Top 10 categorias para não poluir a visualização.</p>
-                </div>
-              </div>
-            </div>
-            <div class="flex gap-1">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="font-size:13px;font-weight:700;color:#e2e4f0;">Composição</div>
+            <div style="display:flex;gap:4px;">
               <button class="chart-type-btn active" onclick="setCompType('doughnut',this)">Rosca</button>
               <button class="chart-type-btn" onclick="setCompType('pie',this)">Pizza</button>
             </div>
           </div>
           <div class="chart-wrap"><canvas id="compChart"></canvas></div>
         </div>
-      </div>
 
-      <!-- Scatter / bubble -->
-      <div class="card p-4 mb-4">
-        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <div class="text-sm font-semibold" style="color:#e2e4f0;">Correlação entre Variáveis</div>
-            <div class="help-btn" tabindex="0" onclick="this.classList.toggle('active')">?
-              <div class="help-popup">
-                <div class="help-popup-title">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4d7aff" stroke-width="2"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="7" r="2"/><circle cx="12" cy="12" r="2"/><line x1="3" y1="21" x2="21" y2="3" stroke-dasharray="3 2"/></svg>
-                  Correlação entre Variáveis
-                </div>
-                <p>Gráfico de dispersão que plota <strong>dois indicadores numéricos ao mesmo tempo</strong> — um no eixo X (horizontal) e outro no eixo Y (vertical).</p>
-                <p>Cada ponto representa um registro. Se os pontos formam uma diagonal, existe <strong>correlação</strong> entre as variáveis.</p>
-                <div class="tip-row"><div class="tip-dot" style="background:#34d399;"></div><div><em>Pontos em diagonal ascendente</em> = correlação positiva (uma aumenta com a outra).</div></div>
-                <div class="tip-row"><div class="tip-dot" style="background:#f87171;"></div><div><em>Pontos em diagonal descendente</em> = correlação negativa (uma aumenta enquanto a outra cai).</div></div>
-                <div class="tip-row"><div class="tip-dot" style="background:#8b90b8;"></div><div>Pontos espalhados = sem correlação significativa.</div></div>
-                <p style="margin-top:8px;color:#8b90b8;">Use os seletores para escolher quais colunas comparar.</p>
-              </div>
+        <!-- Segunda categoria -->
+        <div class="card p-4">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:6px;">
+            <div style="font-size:13px;font-weight:700;color:#e2e4f0;">2ª Análise</div>
+            <select id="dist2-col-select" class="input" style="width:auto;font-size:11px;padding:3px 6px;" onchange="updateDist2Chart()"></select>
+          </div>
+          <div class="chart-wrap"><canvas id="dist2Chart"></canvas></div>
+        </div>
+
+        <!-- Correlação -->
+        <div class="card p-4">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+            <div style="font-size:13px;font-weight:700;color:#e2e4f0;">Correlação</div>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <select id="scatter-x" class="input" style="width:auto;font-size:10px;padding:3px 5px;" onchange="updateScatter()"></select>
+              <span style="color:#4a4f6e;font-size:10px;">×</span>
+              <select id="scatter-y" class="input" style="width:auto;font-size:10px;padding:3px 5px;" onchange="updateScatter()"></select>
             </div>
           </div>
-          <div class="flex gap-2 flex-wrap">
-            <select id="scatter-x" class="input" style="width:auto;font-size:12px;padding:4px 8px;" onchange="updateScatter()"></select>
-            <span class="text-xs self-center" style="color:#8b90b8;">×</span>
-            <select id="scatter-y" class="input" style="width:auto;font-size:12px;padding:4px 8px;" onchange="updateScatter()"></select>
+          <div class="chart-wrap"><canvas id="scatterChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- ── ROW 3: AI Insights + Recomendações ──────────────────── -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+
+        <!-- Insights IA -->
+        <div class="card p-4" style="border-color:rgba(77,122,255,0.25);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#2952f5,#a78bfa);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+              </div>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:#e2e4f0;">Insights Inteligentes</div>
+                <div style="font-size:10px;color:#8b90b8;">Análise automática dos seus dados</div>
+              </div>
+            </div>
+            <button onclick="generateAIInsights()" id="btn-insights" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;gap:5px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Atualizar
+            </button>
+          </div>
+          <div id="ai-insights-content">
+            <div style="text-align:center;padding:24px;color:#4a4f6e;font-size:12px;">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2c3155" stroke-width="1.5" style="margin:0 auto 8px;display:block;"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+              Carregue seus dados para gerar insights automáticos
+            </div>
           </div>
         </div>
-        <div class="chart-wrap"><canvas id="scatterChart"></canvas></div>
+
+        <!-- Recomendações IA -->
+        <div class="card p-4" style="border-color:rgba(52,211,153,0.2);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#059669,#34d399);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:#e2e4f0;">Recomendações</div>
+                <div style="font-size:10px;color:#8b90b8;">Ações preventivas baseadas nos dados</div>
+              </div>
+            </div>
+            <button onclick="generateAIRecommendations()" id="btn-recs" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;gap:5px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Atualizar
+            </button>
+          </div>
+          <div id="ai-recs-content">
+            <div style="text-align:center;padding:24px;color:#4a4f6e;font-size:12px;">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1a4a3a" stroke-width="1.5" style="margin:0 auto 8px;display:block;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              As recomendações aparecem após o carregamento dos dados
+            </div>
+          </div>
+        </div>
       </div>
+
     </section>
 
     <!-- ════ CHARTS SECTION ════ -->
@@ -1548,6 +1571,7 @@ function processData(rows) {
   buildRankings();
   buildCompare();
   buildForecast();
+  generateAIInsightsAuto();
 
   showSection('dashboard');
 }
@@ -1758,6 +1782,7 @@ function populateSelects() {
   const allOpts  = state.headers.map(c=>`<option value="${c}">${c}</option>`).join('');
 
   setOpts('dist-col-select', catOpts||numOpts);
+  setOpts('dist2-col-select', catOpts.length > 1 ? catOpts.split('</option>').slice(1).join('</option>') || catOpts : catOpts||numOpts);
   setOpts('scatter-x', numOpts);
   setOpts('scatter-y', numOpts, 1);
   setOpts('chart-metric-select', numOpts);
@@ -1788,6 +1813,8 @@ function rebuildAllCharts() {
   buildCompChart();
   updateScatter();
   updateAllCharts();
+  updateDist2Chart();
+  buildHSEQuickFilters();
 }
 
 // Trend chart
@@ -3588,6 +3615,356 @@ function applyConfig() {
   buildTrendChart();
   updateDistChart();
   buildCompChart();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ─── DASHBOARD HSE — FILTROS RÁPIDOS ─────────────────────────
+// ═══════════════════════════════════════════════════════════════
+
+let hseActiveFilters = {}; // { col: val }
+
+function buildHSEQuickFilters() {
+  const container = document.getElementById('hse-quick-filters');
+  if (!container || !state.raw.length) return;
+  container.innerHTML = '';
+
+  // Use up to 4 categorical columns as quick filters
+  const cols = state.catCols.slice(0, 4);
+  cols.forEach(col => {
+    const vals = [...new Set(state.raw.map(r => r[col]).filter(Boolean))].sort();
+    if (vals.length < 2 || vals.length > 30) return;
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;align-items:center;gap:4px;';
+
+    const lbl = document.createElement('span');
+    lbl.textContent = col + ':';
+    lbl.style.cssText = 'font-size:11px;color:#8b90b8;white-space:nowrap;';
+
+    const sel = document.createElement('select');
+    sel.className = 'input';
+    sel.style.cssText = 'width:auto;font-size:11px;padding:4px 8px;';
+    sel.dataset.col = col;
+    sel.innerHTML = `<option value="">Todos</option>` + vals.map(v => `<option value="${v}">${v}</option>`).join('');
+    sel.onchange = () => {
+      hseActiveFilters[col] = sel.value || null;
+      applyHSEFilters();
+    };
+
+    wrap.appendChild(lbl);
+    wrap.appendChild(sel);
+    container.appendChild(wrap);
+  });
+}
+
+function applyHSEFilters() {
+  state.filtered = state.raw.filter(row => {
+    for (const [col, val] of Object.entries(hseActiveFilters)) {
+      if (val && row[col] != val) return false;
+    }
+    return true;
+  });
+  // Rebuild dashboard charts with filtered data
+  buildKPIs();
+  buildTrendChart();
+  updateDistChart();
+  updateDist2Chart();
+  buildCompChart();
+  updateScatter();
+  generateAIInsightsAuto();
+}
+
+function clearHSEFilters() {
+  hseActiveFilters = {};
+  document.querySelectorAll('#hse-quick-filters select').forEach(s => s.value = '');
+  state.filtered = [...state.raw];
+  applyHSEFilters();
+}
+
+// ── Second distribution chart ─────────────────────────────────
+function updateDist2Chart() {
+  destroyChart('dist2');
+  const col = document.getElementById('dist2-col-select')?.value;
+  if (!col || !state.raw.length) return;
+
+  const source = state.filtered.length ? state.filtered : state.raw;
+  let labels = [], data = [];
+
+  if (state.types[col] === 'number') {
+    const vals = source.map(r => getNum(r, col)).filter(v => !isNaN(v));
+    const min = Math.min(...vals), max = Math.max(...vals);
+    const bins = Math.min(10, Math.ceil(Math.sqrt(vals.length)));
+    const bw = (max - min) / bins || 1;
+    const counts = Array(bins).fill(0);
+    vals.forEach(v => { const i = Math.min(Math.floor((v - min) / bw), bins - 1); counts[i]++; });
+    labels = Array.from({ length: bins }, (_, i) => fmtShort(min + i * bw));
+    data = counts;
+  } else {
+    const grouped = {};
+    source.forEach(r => { const v = r[col] || '(vazio)'; grouped[v] = (grouped[v] || 0) + 1; });
+    const sorted = Object.entries(grouped).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    labels = sorted.map(([k]) => k.length > 18 ? k.slice(0, 18) + '…' : k);
+    data = sorted.map(([, v]) => v);
+  }
+
+  const ctx = document.getElementById('dist2Chart')?.getContext('2d');
+  if (!ctx) return;
+  const d = chartDefaults();
+  d.indexAxis = 'y';
+  d.plugins.legend.display = false;
+  state.charts.dist2 = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: col, data, backgroundColor: data.map((_, i) => PALETTE_ALPHA(i + 3, 0.8)), borderRadius: 3 }] },
+    options: d
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ─── AI INSIGHTS & RECOMMENDATIONS ENGINE ────────────────────
+// ═══════════════════════════════════════════════════════════════
+
+function buildDataSummaryForAI() {
+  if (!state.raw.length) return null;
+  const source = state.filtered.length ? state.filtered : state.raw;
+  const n = source.length;
+
+  // Numeric summaries
+  const numSummary = state.numCols.slice(0, 8).map(col => {
+    const vals = source.map(r => getNum(r, col)).filter(v => !isNaN(v) && v !== 0);
+    if (!vals.length) return null;
+    const sum = vals.reduce((a, b) => a + b, 0);
+    const avg = sum / vals.length;
+    const max = Math.max(...vals);
+    const min = Math.min(...vals);
+    return `${col}: total=${fmt(sum, 1)}, média=${fmt(avg, 1)}, máx=${fmt(max, 1)}, mín=${fmt(min, 1)}`;
+  }).filter(Boolean).join('\n');
+
+  // Categorical summaries (top 3 per column)
+  const catSummary = state.catCols.slice(0, 5).map(col => {
+    const grouped = {};
+    source.forEach(r => { const v = r[col] || '?'; grouped[v] = (grouped[v] || 0) + 1; });
+    const top3 = Object.entries(grouped).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    return `${col}: ${top3.map(([k, v]) => `${k}(${v})`).join(', ')}`;
+  }).join('\n');
+
+  // Time trend (if date column exists)
+  let timeTrend = '';
+  if (state.dateCols.length && state.numCols.length) {
+    const dcol = state.dateCols[0];
+    const ncol = state.numCols[0];
+    const byMonth = {};
+    source.filter(r => r[dcol] instanceof Date).forEach(r => {
+      const k = `${r[dcol].getFullYear()}-${String(r[dcol].getMonth() + 1).padStart(2, '0')}`;
+      byMonth[k] = (byMonth[k] || 0) + getNum(r, ncol);
+    });
+    const months = Object.entries(byMonth).sort(([a], [b]) => a.localeCompare(b));
+    if (months.length >= 3) {
+      const last3 = months.slice(-3);
+      timeTrend = `\nTendência recente (${ncol}): ${last3.map(([k, v]) => `${k}=${fmt(v, 0)}`).join(' → ')}`;
+      const trend = last3[2][1] > last3[0][1] ? 'crescente' : 'decrescente';
+      timeTrend += ` (tendência ${trend})`;
+    }
+  }
+
+  return `DADOS HSE — ${n} registros\nColunas numéricas:\n${numSummary}\nColunas categóricas:\n${catSummary}${timeTrend}`;
+}
+
+async function generateAIInsights() {
+  const btn = document.getElementById('btn-insights');
+  const content = document.getElementById('ai-insights-content');
+  if (!state.raw.length) { showError('Carregue dados primeiro.'); return; }
+
+  const summary = buildDataSummaryForAI();
+  if (!summary) return;
+
+  // Loading state
+  if (btn) { btn.disabled = true; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Analisando…'; }
+  content.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;">${[1,2,3,4].map(() => `<div style="height:14px;background:linear-gradient(90deg,#1a1e35,#2c3155,#1a1e35);background-size:200%;border-radius:4px;animation:shimmer 1.5s infinite;"></div>`).join('')}</div>`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: `Você é um especialista em HSE (Saúde, Segurança e Meio Ambiente) e análise de dados. 
+Analise os dados fornecidos e gere exatamente 4 insights objetivos e práticos em português brasileiro.
+Cada insight deve ter: um ícone emoji relevante, título curto em negrito, e uma frase explicativa.
+Foco em: padrões de acidentes, setores de risco, tendências temporais, causas principais.
+Responda APENAS em JSON válido, sem markdown, no formato:
+{"insights":[{"emoji":"⚠️","titulo":"Título","descricao":"Descrição do insight com dados específicos"}]}`,
+        messages: [{ role: 'user', content: `Analise estes dados HSE e gere 4 insights:\n\n${summary}` }]
+      })
+    });
+
+    if (!resp.ok) throw new Error(`API ${resp.status}`);
+    const result = await resp.json();
+    const text = result.content?.map(c => c.text || '').join('') || '';
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    const colors = ['#f87171', '#fbbf24', '#4d7aff', '#34d399'];
+    const bgColors = ['rgba(248,113,113,0.08)', 'rgba(251,191,36,0.08)', 'rgba(77,122,255,0.08)', 'rgba(52,211,153,0.08)'];
+    const borderColors = ['rgba(248,113,113,0.2)', 'rgba(251,191,36,0.2)', 'rgba(77,122,255,0.2)', 'rgba(52,211,153,0.2)'];
+
+    content.innerHTML = parsed.insights.map((ins, i) => `
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:${bgColors[i]};border:1px solid ${borderColors[i]};border-radius:8px;margin-bottom:8px;">
+        <div style="font-size:18px;flex-shrink:0;line-height:1.3;">${ins.emoji}</div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:${colors[i]};margin-bottom:2px;">${ins.titulo}</div>
+          <div style="font-size:11px;color:#c8cbdf;line-height:1.5;">${ins.descricao}</div>
+        </div>
+      </div>
+    `).join('');
+
+  } catch(e) {
+    // Fallback: generate local insights without API
+    content.innerHTML = generateLocalInsights();
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Atualizar'; }
+  }
+}
+
+async function generateAIRecommendations() {
+  const btn = document.getElementById('btn-recs');
+  const content = document.getElementById('ai-recs-content');
+  if (!state.raw.length) { showError('Carregue dados primeiro.'); return; }
+
+  const summary = buildDataSummaryForAI();
+  if (!summary) return;
+
+  if (btn) { btn.disabled = true; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Gerando…'; }
+  content.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;">${[1,2,3,4,5].map(() => `<div style="height:14px;background:linear-gradient(90deg,#0d2e1e,#1a4a3a,#0d2e1e);background-size:200%;border-radius:4px;animation:shimmer 1.5s infinite;"></div>`).join('')}</div>`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: `Você é um especialista em HSE (Saúde, Segurança e Meio Ambiente) com foco em prevenção de acidentes.
+Analise os dados fornecidos e gere exatamente 5 recomendações preventivas e práticas em português brasileiro.
+Cada recomendação deve ser acionável, específica para os dados, e voltada para reduzir riscos.
+Priorize por urgência (alta, média, baixa).
+Responda APENAS em JSON válido, sem markdown, no formato:
+{"recomendacoes":[{"prioridade":"alta","acao":"Ação específica a ser tomada"}]}`,
+        messages: [{ role: 'user', content: `Gere 5 recomendações preventivas baseadas nestes dados HSE:\n\n${summary}` }]
+      })
+    });
+
+    if (!resp.ok) throw new Error(`API ${resp.status}`);
+    const result = await resp.json();
+    const text = result.content?.map(c => c.text || '').join('') || '';
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    const priorConfig = {
+      'alta':  { color: '#f87171', bg: 'rgba(248,113,113,0.08)', border: 'rgba(248,113,113,0.2)', label: '🔴 Alta' },
+      'média': { color: '#fbbf24', bg: 'rgba(251,191,36,0.08)',  border: 'rgba(251,191,36,0.2)',  label: '🟡 Média' },
+      'baixa': { color: '#34d399', bg: 'rgba(52,211,153,0.08)', border: 'rgba(52,211,153,0.2)',  label: '🟢 Baixa' },
+    };
+
+    content.innerHTML = parsed.recomendacoes.map((rec, i) => {
+      const cfg = priorConfig[rec.prioridade] || priorConfig['média'];
+      return `
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:${cfg.bg};border:1px solid ${cfg.border};border-radius:8px;margin-bottom:7px;">
+          <div style="width:18px;height:18px;border-radius:50%;background:${cfg.color};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:10px;font-weight:700;color:${cfg.color};margin-bottom:2px;">${cfg.label}</div>
+            <div style="font-size:11px;color:#c8cbdf;line-height:1.5;">${rec.acao}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch(e) {
+    content.innerHTML = generateLocalRecommendations();
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Atualizar'; }
+  }
+}
+
+// ── Auto-generate on data load ─────────────────────────────────
+function generateAIInsightsAuto() {
+  setTimeout(() => {
+    generateAIInsights();
+    generateAIRecommendations();
+  }, 800);
+}
+
+// ── Local fallback insights (no API) ──────────────────────────
+function generateLocalInsights() {
+  if (!state.raw.length) return '';
+  const source = state.filtered.length ? state.filtered : state.raw;
+  const insights = [];
+
+  // Most frequent category per catCol
+  state.catCols.slice(0, 2).forEach(col => {
+    const grouped = {};
+    source.forEach(r => { const v = r[col] || '?'; grouped[v] = (grouped[v] || 0) + 1; });
+    const top = Object.entries(grouped).sort((a, b) => b[1] - a[1])[0];
+    if (top) {
+      const pct = (top[1] / source.length * 100).toFixed(1);
+      insights.push({ emoji: '📊', titulo: `Destaque em ${col}`, descricao: `"${top[0]}" representa ${pct}% dos registros (${top[1]} de ${source.length}).` });
+    }
+  });
+
+  // Numeric trend
+  state.numCols.slice(0, 2).forEach(col => {
+    const vals = source.map(r => getNum(r, col)).filter(v => v > 0);
+    if (vals.length < 2) return;
+    const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+    const max = Math.max(...vals);
+    insights.push({ emoji: '📈', titulo: `Indicador: ${col}`, descricao: `Média de ${fmt(avg, 1)} por registro. Valor máximo registrado: ${fmt(max, 1)}.` });
+  });
+
+  while (insights.length < 4) insights.push({ emoji: '💡', titulo: 'Análise disponível', descricao: 'Adicione mais colunas à planilha para obter insights mais detalhados sobre seus indicadores HSE.' });
+
+  const colors = ['#f87171', '#fbbf24', '#4d7aff', '#34d399'];
+  const bgColors = ['rgba(248,113,113,0.08)', 'rgba(251,191,36,0.08)', 'rgba(77,122,255,0.08)', 'rgba(52,211,153,0.08)'];
+  const borderColors = ['rgba(248,113,113,0.2)', 'rgba(251,191,36,0.2)', 'rgba(77,122,255,0.2)', 'rgba(52,211,153,0.2)'];
+
+  return insights.slice(0, 4).map((ins, i) => `
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:${bgColors[i]};border:1px solid ${borderColors[i]};border-radius:8px;margin-bottom:8px;">
+      <div style="font-size:18px;flex-shrink:0;line-height:1.3;">${ins.emoji}</div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:${colors[i]};margin-bottom:2px;">${ins.titulo}</div>
+        <div style="font-size:11px;color:#c8cbdf;line-height:1.5;">${ins.descricao}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function generateLocalRecommendations() {
+  const recs = [
+    { prioridade: 'alta',  acao: 'Investigar as categorias com maior frequência de ocorrências e implementar medidas corretivas imediatas.' },
+    { prioridade: 'alta',  acao: 'Realizar treinamento específico para os grupos identificados como de maior risco nos dados.' },
+    { prioridade: 'média', acao: 'Revisar os procedimentos operacionais das áreas com maior concentração de registros.' },
+    { prioridade: 'média', acao: 'Implementar inspeções periódicas nas categorias que apresentam tendência de crescimento.' },
+    { prioridade: 'baixa', acao: 'Documentar e compartilhar boas práticas das áreas com menor índice de ocorrências.' },
+  ];
+  const priorConfig = {
+    'alta':  { color: '#f87171', bg: 'rgba(248,113,113,0.08)', border: 'rgba(248,113,113,0.2)', label: '🔴 Alta' },
+    'média': { color: '#fbbf24', bg: 'rgba(251,191,36,0.08)',  border: 'rgba(251,191,36,0.2)',  label: '🟡 Média' },
+    'baixa': { color: '#34d399', bg: 'rgba(52,211,153,0.08)', border: 'rgba(52,211,153,0.2)',  label: '🟢 Baixa' },
+  };
+  return recs.map(rec => {
+    const cfg = priorConfig[rec.prioridade];
+    return `
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:${cfg.bg};border:1px solid ${cfg.border};border-radius:8px;margin-bottom:7px;">
+        <div style="width:18px;height:18px;border-radius:50%;background:${cfg.color};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:700;color:${cfg.color};margin-bottom:2px;">${cfg.label}</div>
+          <div style="font-size:11px;color:#c8cbdf;line-height:1.5;">${rec.acao}</div>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────

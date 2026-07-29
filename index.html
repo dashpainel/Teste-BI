@@ -786,7 +786,7 @@ tailwind.config = {
         </div>
       </div>
 
-      <!-- ── ROW 2: Composição + Segundo gráfico de categoria + Scatter ── -->
+      <!-- ── ROW 2: Composição + Mapa Corporal + Correlação ──── -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
 
         <!-- Composição rosca -->
@@ -801,7 +801,21 @@ tailwind.config = {
           <div class="chart-wrap"><canvas id="compChart"></canvas></div>
         </div>
 
-        <!-- Segunda categoria -->
+        <!-- Mapa corporal interativo -->
+        <div class="card p-4">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
+            <div style="font-size:13px;font-weight:700;color:#e2e4f0;">Parte do Corpo Atingida</div>
+            <select id="body-col-select" class="input" style="width:auto;font-size:11px;padding:3px 6px;" onchange="updateBodyMap()"></select>
+          </div>
+          <div id="body-map-container" style="display:flex;gap:10px;align-items:flex-start;height:220px;">
+            <!-- SVG body will be injected here -->
+            <div id="body-svg-wrap" style="flex-shrink:0;height:100%;display:flex;align-items:center;justify-content:center;"></div>
+            <!-- Legend -->
+            <div id="body-legend" style="flex:1;font-size:10px;overflow-y:auto;max-height:220px;"></div>
+          </div>
+        </div>
+
+        <!-- 2ª Análise Categórica -->
         <div class="card p-4">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:6px;">
             <div style="font-size:13px;font-weight:700;color:#e2e4f0;">2ª Análise</div>
@@ -809,23 +823,10 @@ tailwind.config = {
           </div>
           <div class="chart-wrap"><canvas id="dist2Chart"></canvas></div>
         </div>
-
-        <!-- Correlação -->
-        <div class="card p-4">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
-            <div style="font-size:13px;font-weight:700;color:#e2e4f0;">Correlação</div>
-            <div style="display:flex;gap:4px;align-items:center;">
-              <select id="scatter-x" class="input" style="width:auto;font-size:10px;padding:3px 5px;" onchange="updateScatter()"></select>
-              <span style="color:#4a4f6e;font-size:10px;">×</span>
-              <select id="scatter-y" class="input" style="width:auto;font-size:10px;padding:3px 5px;" onchange="updateScatter()"></select>
-            </div>
-          </div>
-          <div class="chart-wrap"><canvas id="scatterChart"></canvas></div>
-        </div>
       </div>
 
-      <!-- ── ROW 3: AI Insights + Recomendações ──────────────────── -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <!-- ── ROW 3: AI Análise Completa ──────────────────────── -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
 
         <!-- Insights IA -->
         <div class="card p-4" style="border-color:rgba(77,122,255,0.25);">
@@ -836,43 +837,56 @@ tailwind.config = {
               </div>
               <div>
                 <div style="font-size:13px;font-weight:700;color:#e2e4f0;">Insights Inteligentes</div>
-                <div style="font-size:10px;color:#8b90b8;">Análise automática dos seus dados</div>
+                <div style="font-size:10px;color:#8b90b8;">Análise automática dos dados</div>
               </div>
             </div>
-            <button onclick="generateAIInsights()" id="btn-insights" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;gap:5px;">
+            <button onclick="runFullAIAnalysis()" id="btn-insights" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;gap:5px;">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-              Atualizar
+              Analisar
             </button>
           </div>
           <div id="ai-insights-content">
-            <div style="text-align:center;padding:24px;color:#4a4f6e;font-size:12px;">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2c3155" stroke-width="1.5" style="margin:0 auto 8px;display:block;"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-              Carregue seus dados para gerar insights automáticos
+            <div style="text-align:center;padding:20px;color:#4a4f6e;font-size:11px;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2c3155" stroke-width="1.5" style="margin:0 auto 8px;display:block;"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+              Carregue dados para gerar insights
             </div>
           </div>
         </div>
 
         <!-- Recomendações IA -->
         <div class="card p-4" style="border-color:rgba(52,211,153,0.2);">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#059669,#34d399);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              </div>
-              <div>
-                <div style="font-size:13px;font-weight:700;color:#e2e4f0;">Recomendações</div>
-                <div style="font-size:10px;color:#8b90b8;">Ações preventivas baseadas nos dados</div>
-              </div>
+          <div style="display:flex;align-items:center;margin-bottom:14px;">
+            <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#059669,#34d399);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:8px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             </div>
-            <button onclick="generateAIRecommendations()" id="btn-recs" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;gap:5px;">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-              Atualizar
-            </button>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#e2e4f0;">Recomendações</div>
+              <div style="font-size:10px;color:#8b90b8;">Ações preventivas priorizadas</div>
+            </div>
           </div>
           <div id="ai-recs-content">
-            <div style="text-align:center;padding:24px;color:#4a4f6e;font-size:12px;">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1a4a3a" stroke-width="1.5" style="margin:0 auto 8px;display:block;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              As recomendações aparecem após o carregamento dos dados
+            <div style="text-align:center;padding:20px;color:#4a4f6e;font-size:11px;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1a4a3a" stroke-width="1.5" style="margin:0 auto 8px;display:block;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Recomendações aparecem após análise
+            </div>
+          </div>
+        </div>
+
+        <!-- Projeção IA -->
+        <div class="card p-4" style="border-color:rgba(251,191,36,0.2);">
+          <div style="display:flex;align-items:center;margin-bottom:14px;">
+            <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#d97706,#fbbf24);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:8px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M2 20 L7 14 L12 16 L17 8 L22 4"/><path d="M17 8 L22 4 L22 9"/></svg>
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#e2e4f0;">Projeção Futura</div>
+              <div style="font-size:10px;color:#8b90b8;">Tendência para próximos períodos</div>
+            </div>
+          </div>
+          <div id="ai-proj-content">
+            <div style="text-align:center;padding:20px;color:#4a4f6e;font-size:11px;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3a2d0a" stroke-width="1.5" style="margin:0 auto 8px;display:block;"><path d="M2 20 L7 14 L12 16 L17 8 L22 4"/></svg>
+              Projeções aparecem após análise
             </div>
           </div>
         </div>
@@ -1782,6 +1796,7 @@ function populateSelects() {
   const allOpts  = state.headers.map(c=>`<option value="${c}">${c}</option>`).join('');
 
   setOpts('dist-col-select', catOpts||numOpts);
+  setOpts('body-col-select', catOpts||numOpts);
   setOpts('dist2-col-select', catOpts.length > 1 ? catOpts.split('</option>').slice(1).join('</option>') || catOpts : catOpts||numOpts);
   setOpts('scatter-x', numOpts);
   setOpts('scatter-y', numOpts, 1);
@@ -1814,6 +1829,7 @@ function rebuildAllCharts() {
   updateScatter();
   updateAllCharts();
   updateDist2Chart();
+  updateBodyMap();
   buildHSEQuickFilters();
 }
 
@@ -3720,8 +3736,359 @@ function updateDist2Chart() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// ─── AI INSIGHTS & RECOMMENDATIONS ENGINE ────────────────────
+// ─── MAPA CORPORAL INTERATIVO ─────────────────────────────────
 // ═══════════════════════════════════════════════════════════════
+
+// Body part name mapping (Portuguese → SVG part ID)
+const BODY_PARTS_MAP = {
+  // Head/Face
+  'cabeça': 'head', 'head': 'head', 'crânio': 'head', 'cranio': 'head',
+  'rosto': 'head', 'face': 'head', 'olho': 'head', 'olhos': 'head',
+  'nariz': 'head', 'boca': 'head', 'ouvido': 'head', 'ouvidos': 'head',
+  'pescoço': 'neck', 'pescoco': 'neck', 'cervical': 'neck',
+  // Torso
+  'tronco': 'torso', 'tórax': 'torso', 'torax': 'torso', 'peito': 'torso',
+  'costas': 'back', 'coluna': 'back', 'lombar': 'back', 'dorsal': 'back',
+  'abdômen': 'torso', 'abdomen': 'torso', 'barriga': 'torso',
+  'ombro': 'shoulder-l', 'ombros': 'shoulder-l',
+  // Arms
+  'braço': 'arm-l', 'bracos': 'arm-l', 'braço direito': 'arm-r',
+  'antebraço': 'forearm-l', 'antebraco': 'forearm-l',
+  'cotovelo': 'forearm-l', 'cotovelos': 'forearm-l',
+  'punho': 'hand-l', 'pulso': 'hand-l',
+  'mão': 'hand-l', 'mãos': 'hand-l', 'mao': 'hand-l', 'maos': 'hand-l',
+  'dedo': 'hand-l', 'dedos': 'hand-l', 'dedo da mão': 'hand-l',
+  // Legs
+  'perna': 'leg-l', 'pernas': 'leg-l', 'coxa': 'leg-l', 'coxas': 'leg-l',
+  'joelho': 'knee-l', 'joelhos': 'knee-l',
+  'panturrilha': 'lleg-l', 'canela': 'lleg-l',
+  'tornozelo': 'foot-l', 'tornozelos': 'foot-l',
+  'pé': 'foot-l', 'pés': 'foot-l', 'pe': 'foot-l', 'pes': 'foot-l',
+  'dedo do pé': 'foot-l', 'dedos do pé': 'foot-l',
+};
+
+const BODY_PART_LABELS = {
+  'head': 'Cabeça/Face', 'neck': 'Pescoço', 'torso': 'Tronco/Abdômen',
+  'back': 'Costas', 'shoulder-l': 'Ombros', 'arm-l': 'Braços',
+  'forearm-l': 'Antebraços', 'hand-l': 'Mãos/Dedos',
+  'leg-l': 'Pernas/Coxas', 'knee-l': 'Joelhos',
+  'lleg-l': 'Panturrilhas', 'foot-l': 'Pés/Tornozelos',
+};
+
+function updateBodyMap() {
+  const col = document.getElementById('body-col-select')?.value;
+  const container = document.getElementById('body-map-container');
+  if (!col || !state.raw.length || !container) return;
+
+  const source = state.filtered.length ? state.filtered : state.raw;
+
+  // Count by body part
+  const counts = {};
+  source.forEach(r => {
+    const val = String(r[col] || '').toLowerCase().trim();
+    if (!val) return;
+    // Try direct match then partial match
+    let partId = null;
+    for (const [keyword, id] of Object.entries(BODY_PARTS_MAP)) {
+      if (val === keyword || val.includes(keyword)) { partId = id; break; }
+    }
+    if (partId) counts[partId] = (counts[partId] || 0) + 1;
+  });
+
+  const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
+  const maxCount = Math.max(...Object.values(counts), 1);
+
+  // Color intensity function
+  const getColor = (partId) => {
+    const c = counts[partId] || 0;
+    if (c === 0) return '#1a1e35';
+    const intensity = c / maxCount;
+    if (intensity > 0.7) return '#ef4444';
+    if (intensity > 0.4) return '#f97316';
+    if (intensity > 0.2) return '#fbbf24';
+    return '#34d399';
+  };
+
+  const getOpacity = (partId) => {
+    const c = counts[partId] || 0;
+    return c === 0 ? 0.3 : 0.7 + (c / maxCount) * 0.3;
+  };
+
+  // Build SVG body
+  const svgWrap = document.getElementById('body-svg-wrap');
+  svgWrap.innerHTML = `
+    <svg viewBox="0 0 120 280" width="90" height="210" style="overflow:visible;">
+      <defs>
+        <filter id="glow"><feGaussianBlur stdDeviation="2" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+
+      <!-- HEAD -->
+      <ellipse id="bp-head" cx="60" cy="22" rx="16" ry="20"
+        fill="${getColor('head')}" opacity="${getOpacity('head')}" stroke="#2c3155" stroke-width="1"
+        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('head')"
+        ${counts['head'] ? 'filter="url(#glow)"' : ''}/>
+      <!-- NECK -->
+      <rect id="bp-neck" x="54" y="41" width="12" height="10" rx="3"
+        fill="${getColor('neck')}" opacity="${getOpacity('neck')}" stroke="#2c3155" stroke-width="1"
+        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('neck')"/>
+      <!-- TORSO -->
+      <path id="bp-torso" d="M36 52 Q32 90 35 130 L85 130 Q88 90 84 52 Q72 48 60 48 Q48 48 36 52Z"
+        fill="${getColor('torso')}" opacity="${getOpacity('torso')}" stroke="#2c3155" stroke-width="1"
+        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('torso')"
+        ${counts['torso'] ? 'filter="url(#glow)"' : ''}/>
+      <!-- BACK overlay indicator -->
+      ${counts['back'] ? `<path d="M36 52 Q32 90 35 130 L85 130 Q88 90 84 52 Q72 48 60 48 Q48 48 36 52Z" fill="none" stroke="${getColor('back')}" stroke-width="3" opacity="0.8"/>` : ''}
+      <!-- LEFT SHOULDER -->
+      <ellipse id="bp-shoulder-l" cx="31" cy="58" rx="10" ry="8"
+        fill="${getColor('shoulder-l')}" opacity="${getOpacity('shoulder-l')}" stroke="#2c3155" stroke-width="1"
+        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('shoulder-l')"
+        ${counts['shoulder-l'] ? 'filter="url(#glow)"' : ''}/>
+      <ellipse cx="89" cy="58" rx="10" ry="8"
+        fill="${getColor('shoulder-l')}" opacity="${getOpacity('shoulder-l')}" stroke="#2c3155" stroke-width="1"/>
+      <!-- LEFT ARM -->
+      <rect id="bp-arm-l" x="18" y="65" width="14" height="45" rx="6"
+        fill="${getColor('arm-l')}" opacity="${getOpacity('arm-l')}" stroke="#2c3155" stroke-width="1"
+        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('arm-l')"
+        ${counts['arm-l'] ? 'filter="url(#glow)"' : ''}/>
+      <rect x="88" y="65" width="14" height="45" rx="6"
+        fill="${getColor('arm-l')}" opacity="${getOpacity('arm-l')}" stroke="#2c3155" stroke-width="1"/>
+      <!-- LEFT FOREARM -->
+      <rect id="bp-forearm-l" x="19" y="112" width="12" height="38" rx="5"
+        fill="${getColor('forearm-l')}" opacity="${getOpacity('forearm-l')}" stroke="#2c3155" stroke-width="1"
+        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('forearm-l')"
+        ${counts['forearm-l'] ? 'filter="url(#glow)"' : ''}/>
+      <rect x="89" y="112" width="12" height="38" rx="5"
+        fill="${getColor('forearm-l')}" opacity="${getOpacity('forearm-l')}" stroke="#2c3155" stroke-width="1"/>
+      <!-- LEFT HAND -->
+      <ellipse id="bp-hand-l" cx="25" cy="160" rx="9" ry="12"
+        fill="${getColor('hand-l')}" opacity="${getOpacity('hand-l')}" stroke="#2c3155" stroke-width="1"
+        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('hand-l')"
+        ${counts['hand-l'] ? 'filter="url(#glow)"' : ''}/>
+      <ellipse cx="95" cy="160" rx="9" ry="12"
+        fill="${getColor('hand-l')}" opacity="${getOpacity('hand-l')}" stroke="#2c3155" stroke-width="1"/>
+      <!-- LEFT LEG (thigh) -->
+      <rect id="bp-leg-l" x="38" y="132" width="18" height="55" rx="7"
+        fill="${getColor('leg-l')}" opacity="${getOpacity('leg-l')}" stroke="#2c3155" stroke-width="1"
+        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('leg-l')"
+        ${counts['leg-l'] ? 'filter="url(#glow)"' : ''}/>
+      <rect x="64" y="132" width="18" height="55" rx="7"
+        fill="${getColor('leg-l')}" opacity="${getOpacity('leg-l')}" stroke="#2c3155" stroke-width="1"/>
+      <!-- KNEES -->
+      <ellipse id="bp-knee-l" cx="47" cy="189" rx="10" ry="7"
+        fill="${getColor('knee-l')}" opacity="${getOpacity('knee-l')}" stroke="#2c3155" stroke-width="1"
+        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('knee-l')"
+        ${counts['knee-l'] ? 'filter="url(#glow)"' : ''}/>
+      <ellipse cx="73" cy="189" rx="10" ry="7"
+        fill="${getColor('knee-l')}" opacity="${getOpacity('knee-l')}" stroke="#2c3155" stroke-width="1"/>
+      <!-- LOWER LEGS -->
+      <rect id="bp-lleg-l" x="39" y="196" width="16" height="48" rx="6"
+        fill="${getColor('lleg-l')}" opacity="${getOpacity('lleg-l')}" stroke="#2c3155" stroke-width="1"
+        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('lleg-l')"
+        ${counts['lleg-l'] ? 'filter="url(#glow)"' : ''}/>
+      <rect x="65" y="196" width="16" height="48" rx="6"
+        fill="${getColor('lleg-l')}" opacity="${getOpacity('lleg-l')}" stroke="#2c3155" stroke-width="1"/>
+      <!-- FEET -->
+      <ellipse id="bp-foot-l" cx="47" cy="250" rx="13" ry="8"
+        fill="${getColor('foot-l')}" opacity="${getOpacity('foot-l')}" stroke="#2c3155" stroke-width="1"
+        style="cursor:pointer;transition:all 0.3s;" onclick="highlightPart('foot-l')"
+        ${counts['foot-l'] ? 'filter="url(#glow)"' : ''}/>
+      <ellipse cx="73" cy="250" rx="13" ry="8"
+        fill="${getColor('foot-l')}" opacity="${getOpacity('foot-l')}" stroke="#2c3155" stroke-width="1"/>
+
+      <!-- Count labels on hot spots -->
+      ${Object.entries(counts).map(([partId, count]) => {
+        const positions = {
+          'head': [60,22], 'neck': [60,47], 'torso': [60,90], 'back': [60,90],
+          'shoulder-l': [31,58], 'arm-l': [25,88], 'forearm-l': [25,131],
+          'hand-l': [25,160], 'leg-l': [47,159], 'knee-l': [47,189],
+          'lleg-l': [47,220], 'foot-l': [47,250],
+        };
+        const pos = positions[partId];
+        if (!pos) return '';
+        return `<text x="${pos[0]}" y="${pos[1]+4}" text-anchor="middle" font-size="8" font-weight="bold" fill="white" style="pointer-events:none;">${count}</text>`;
+      }).join('')}
+    </svg>
+  `;
+
+  // Legend
+  const legend = document.getElementById('body-legend');
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  legend.innerHTML = sorted.length === 0
+    ? '<div style="color:#4a4f6e;font-size:10px;padding:8px;">Nenhum dado de parte do corpo identificado na coluna selecionada.</div>'
+    : sorted.map(([partId, count]) => {
+        const pct = (count / total * 100).toFixed(1);
+        const color = getColor(partId);
+        return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+          <div style="width:10px;height:10px;border-radius:2px;background:${color};flex-shrink:0;"></div>
+          <div style="flex:1;font-size:10px;color:#c8cbdf;">${BODY_PART_LABELS[partId] || partId}</div>
+          <div style="font-size:10px;font-weight:700;color:${color};">${count} <span style="color:#4a4f6e;">(${pct}%)</span></div>
+        </div>`;
+      }).join('');
+}
+
+function highlightPart(partId) {
+  // Tooltip on click
+  const label = BODY_PART_LABELS[partId] || partId;
+  showError(`${label} — clique no gráfico para mais detalhes`);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ─── ANÁLISE IA UNIFICADA ─────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+
+async function runFullAIAnalysis() {
+  if (!state.raw.length) { showError('Carregue dados primeiro.'); return; }
+
+  const btn = document.getElementById('btn-insights');
+  const insEl  = document.getElementById('ai-insights-content');
+  const recsEl = document.getElementById('ai-recs-content');
+  const projEl = document.getElementById('ai-proj-content');
+
+  // Loading state for all three panels
+  const shimmer = (bg1, bg2) => `<div style="display:flex;flex-direction:column;gap:7px;">${[1,2,3,4].map(() =>
+    `<div style="height:13px;background:linear-gradient(90deg,${bg1},${bg2},${bg1});background-size:200%;border-radius:4px;animation:shimmer 1.5s infinite;"></div>`
+  ).join('')}</div>`;
+
+  if (btn) { btn.disabled = true; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Analisando…'; }
+  insEl.innerHTML  = shimmer('#0d0f1c', '#2c3155');
+  recsEl.innerHTML = shimmer('#0d2e1e', '#1a4a3a');
+  projEl.innerHTML = shimmer('#2a1a00', '#3a2d0a');
+
+  const summary = buildDataSummaryForAI();
+  if (!summary) return;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1800,
+        system: `Você é um especialista sênior em HSE (Saúde, Segurança e Meio Ambiente) com 20 anos de experiência em análise de dados de acidentes de trabalho e prevenção de riscos ocupacionais.
+
+Analise os dados HSE fornecidos e gere uma resposta JSON com três seções:
+1. "insights": 4 insights objetivos sobre padrões nos dados
+2. "recomendacoes": 5 ações preventivas priorizadas por urgência
+3. "projecao": análise de tendência com projeção para os próximos 3 meses
+
+Para cada insight: emoji relevante, título curto, descrição com dados específicos.
+Para cada recomendação: prioridade (alta/média/baixa), ação específica e mensurável.
+Para a projeção: tendencia (crescente/estável/decrescente), porcentagem esperada de variação, e 3 pontos de análise.
+
+Responda APENAS em JSON válido sem markdown:
+{
+  "insights": [{"emoji":"","titulo":"","descricao":""}],
+  "recomendacoes": [{"prioridade":"alta","acao":""}],
+  "projecao": {"tendencia":"","variacao":"","analise":["","",""]}
+}`,
+        messages: [{ role: 'user', content: `Analise estes dados HSE completos e gere insights, recomendações e projeção:\n\n${summary}` }]
+      })
+    });
+
+    if (!resp.ok) throw new Error(`API ${resp.status}`);
+    const result = await resp.json();
+    const text = result.content?.map(c => c.text || '').join('') || '';
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    // Render insights
+    const iColors  = ['#f87171', '#fbbf24', '#4d7aff', '#34d399'];
+    const iBgs     = ['rgba(248,113,113,0.08)', 'rgba(251,191,36,0.08)', 'rgba(77,122,255,0.08)', 'rgba(52,211,153,0.08)'];
+    const iBorders = ['rgba(248,113,113,0.2)',  'rgba(251,191,36,0.2)',  'rgba(77,122,255,0.2)',  'rgba(52,211,153,0.2)'];
+    insEl.innerHTML = parsed.insights.map((ins, i) => `
+      <div style="display:flex;gap:9px;padding:9px 11px;background:${iBgs[i]};border:1px solid ${iBorders[i]};border-radius:7px;margin-bottom:7px;">
+        <div style="font-size:16px;flex-shrink:0;line-height:1.4;">${ins.emoji}</div>
+        <div><div style="font-size:11px;font-weight:700;color:${iColors[i]};margin-bottom:2px;">${ins.titulo}</div>
+        <div style="font-size:10px;color:#c8cbdf;line-height:1.5;">${ins.descricao}</div></div>
+      </div>`).join('');
+
+    // Render recommendations
+    const pCfg = {
+      'alta':  { color:'#f87171', bg:'rgba(248,113,113,0.08)', border:'rgba(248,113,113,0.2)', label:'🔴 Alta' },
+      'média': { color:'#fbbf24', bg:'rgba(251,191,36,0.08)',  border:'rgba(251,191,36,0.2)',  label:'🟡 Média' },
+      'baixa': { color:'#34d399', bg:'rgba(52,211,153,0.08)', border:'rgba(52,211,153,0.2)',  label:'🟢 Baixa' },
+    };
+    recsEl.innerHTML = parsed.recomendacoes.map(rec => {
+      const cfg = pCfg[rec.prioridade] || pCfg['média'];
+      return `<div style="display:flex;gap:9px;padding:8px 11px;background:${cfg.bg};border:1px solid ${cfg.border};border-radius:7px;margin-bottom:6px;">
+        <div style="width:16px;height:16px;border-radius:50%;background:${cfg.color};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div><div style="font-size:9px;font-weight:700;color:${cfg.color};margin-bottom:2px;">${cfg.label}</div>
+        <div style="font-size:10px;color:#c8cbdf;line-height:1.5;">${rec.acao}</div></div>
+      </div>`;
+    }).join('');
+
+    // Render projection
+    const proj = parsed.projecao;
+    const trendColor = proj.tendencia === 'crescente' ? '#f87171' : proj.tendencia === 'decrescente' ? '#34d399' : '#fbbf24';
+    const trendIcon  = proj.tendencia === 'crescente' ? '📈' : proj.tendencia === 'decrescente' ? '📉' : '➡️';
+    projEl.innerHTML = `
+      <div style="padding:10px 12px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:8px;margin-bottom:10px;display:flex;align-items:center;gap:10px;">
+        <div style="font-size:24px;">${trendIcon}</div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:${trendColor};text-transform:capitalize;">${proj.tendencia}</div>
+          <div style="font-size:11px;color:#fbbf24;">Variação esperada: ${proj.variacao}</div>
+        </div>
+      </div>
+      ${proj.analise.map((item, i) => `
+        <div style="display:flex;gap:8px;margin-bottom:7px;padding:7px 10px;background:rgba(251,191,36,0.05);border-radius:6px;">
+          <div style="font-size:10px;font-weight:800;color:#fbbf24;flex-shrink:0;">${i+1}.</div>
+          <div style="font-size:10px;color:#c8cbdf;line-height:1.5;">${item}</div>
+        </div>`).join('')}`;
+
+  } catch(e) {
+    // Fallback to local generation
+    insEl.innerHTML  = generateLocalInsights();
+    recsEl.innerHTML = generateLocalRecommendations();
+    projEl.innerHTML = generateLocalProjection();
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Analisar'; }
+  }
+}
+
+function generateLocalProjection() {
+  if (!state.raw.length) return '';
+  // Simple trend from linear regression
+  const numCol = state.numCols[0];
+  if (!numCol) return '<div style="color:#4a4f6e;font-size:11px;padding:12px;">Adicione colunas numéricas para ver a projeção.</div>';
+
+  const source = state.filtered.length ? state.filtered : state.raw;
+  const vals = source.map(r => getNum(r, numCol)).filter(v => v > 0);
+  const half1 = vals.slice(0, Math.floor(vals.length/2)).reduce((a,b)=>a+b,0);
+  const half2 = vals.slice(Math.floor(vals.length/2)).reduce((a,b)=>a+b,0);
+  const trend = half2 > half1 * 1.1 ? 'crescente' : half2 < half1 * 0.9 ? 'decrescente' : 'estável';
+  const pct = half1 > 0 ? Math.abs((half2-half1)/half1*100).toFixed(1) : '0';
+  const trendColor = trend === 'crescente' ? '#f87171' : trend === 'decrescente' ? '#34d399' : '#fbbf24';
+  const trendIcon = trend === 'crescente' ? '📈' : trend === 'decrescente' ? '📉' : '➡️';
+
+  return `
+    <div style="padding:10px 12px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:8px;margin-bottom:10px;display:flex;align-items:center;gap:10px;">
+      <div style="font-size:24px;">${trendIcon}</div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:${trendColor};text-transform:capitalize;">${trend}</div>
+        <div style="font-size:11px;color:#fbbf24;">Variação estimada: ${pct}%</div>
+      </div>
+    </div>
+    <div style="font-size:10px;color:#c8cbdf;padding:7px 10px;background:rgba(251,191,36,0.05);border-radius:6px;margin-bottom:6px;">
+      1. Com base na comparação dos períodos analisados, a tendência dos indicadores é ${trend}.
+    </div>
+    <div style="font-size:10px;color:#c8cbdf;padding:7px 10px;background:rgba(251,191,36,0.05);border-radius:6px;margin-bottom:6px;">
+      2. Para projeções detalhadas por mês, acesse a seção "Projeção" no menu lateral.
+    </div>
+    <div style="font-size:10px;color:#c8cbdf;padding:7px 10px;background:rgba(251,191,36,0.05);border-radius:6px;">
+      3. Mantenha ações preventivas ativas para reverter ou manter a tendência favorável.
+    </div>`;
+}
+
+// Keep legacy function names as wrappers for backward compat
+function generateAIInsights() { runFullAIAnalysis(); }
+function generateAIRecommendations() { runFullAIAnalysis(); }
+function generateAIInsightsAuto() {
+  setTimeout(() => runFullAIAnalysis(), 1000);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────
 
 function buildDataSummaryForAI() {
   if (!state.raw.length) return null;

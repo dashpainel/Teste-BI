@@ -769,20 +769,8 @@ tailwind.config = {
       <!-- ══ LINHA 1: 7 KPI CARDS HSE ══ -->
       <div id="kpi-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px;"></div>
 
-      <!-- ══ LINHA 2: Evolução + Regional + Setor + Turno ══ -->
-      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
-
-        <!-- Evolução Mensal -->
-        <div class="card p-3">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-            <div style="font-size:11px;font-weight:700;color:#e2e4f0;text-transform:uppercase;letter-spacing:0.04em;">Evolução de Acidentes (Mensal)</div>
-            <div style="display:flex;gap:3px;">
-              <button class="chart-type-btn active" style="font-size:9px;padding:2px 6px;" onclick="setTrendType('line',this)">Linha</button>
-              <button class="chart-type-btn" style="font-size:9px;padding:2px 6px;" onclick="setTrendType('bar',this)">Barra</button>
-            </div>
-          </div>
-          <div style="height:170px;"><canvas id="trendChart"></canvas></div>
-        </div>
+      <!-- ══ LINHA 2: Regional + Setor + Turno ══ -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
 
         <!-- Acidentes por Regional -->
         <div class="card p-3">
@@ -863,8 +851,8 @@ tailwind.config = {
         </div>
       </div>
 
-      <!-- ══ LINHA 4: Insights IA + Responsável/Unidade + Tendência 3 meses + Recomendações ══ -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+      <!-- ══ LINHA 4: Insights IA + Acidentes por Unidade + Recomendações ══ -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
 
         <!-- Insights Inteligentes -->
         <div class="card p-3" style="border-color:rgba(77,122,255,0.2);">
@@ -883,13 +871,6 @@ tailwind.config = {
         <div class="card p-3">
           <div style="font-size:11px;font-weight:700;color:#e2e4f0;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Acidentes por Unidade</div>
           <div style="height:210px;"><canvas id="unidadeChart"></canvas></div>
-        </div>
-
-        <!-- Tendência 3 meses -->
-        <div class="card p-3">
-          <div style="font-size:11px;font-weight:700;color:#e2e4f0;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Tendência para Próximos 3 Meses</div>
-          <div id="tendencia-badge" style="font-size:9px;color:#4a4f6e;margin-bottom:6px;line-height:1.4;">Carregue dados para ver a projeção</div>
-          <div style="height:170px;"><canvas id="tendenciaChart"></canvas></div>
         </div>
 
         <!-- Recomendações -->
@@ -940,6 +921,7 @@ tailwind.config = {
             </span>
           </div>
         </div>
+        <div id="fc-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;"></div>
         <div style="font-size:11px;color:#4a4f6e;margin-bottom:12px;" id="fc-model-info"></div>
         <div class="chart-wrap-lg" style="height:360px;"><canvas id="forecastChart"></canvas></div>
       </div>
@@ -1631,6 +1613,7 @@ function setTrendType(t, btn) {
 }
 
 function buildTrendChart() {
+  if (!document.getElementById('trendChart')) return; // gráfico removido do Dashboard HSE
   destroyChart('trend');
   if (!state.raw.length) return;
 

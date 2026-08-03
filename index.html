@@ -889,7 +889,7 @@ tailwind.config = {
 
       <!-- Histórico + Projeção (movido da aba Projeção) -->
       <div class="card card-glow p-4 mb-4">
-        <div class="flex items-center justify-between mb-1 flex-wrap gap-2">
+        <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
           <div style="display:flex;align-items:center;gap:8px;">
             <div class="text-sm font-semibold" style="color:#e2e4f0;">Histórico + Projeção</div>
             <div class="help-btn" tabindex="0" onclick="this.classList.toggle('active')">?
@@ -898,32 +898,24 @@ tailwind.config = {
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4d7aff" stroke-width="2"><path d="M2 20 L8 14 L13 17 L20 8"/><path d="M20 8 L22 14 M20 8 L14 9" stroke-dasharray="3 2"/></svg>
                   Histórico + Projeção
                 </div>
-                <p>Combina <strong>três camadas de informação</strong> em um único gráfico, dividido pela linha pontilhada vertical:</p>
-                <div class="tip-row"><div class="tip-dot" style="background:#4d7aff;"></div><div><strong>Linha azul</strong> — valores reais históricos. O que de fato aconteceu.</div></div>
-                <div class="tip-row"><div class="tip-dot" style="background:#34d399;"></div><div><strong>Linha verde tracejada</strong> — projeção por <em>Regressão Linear</em>: calcula a tendência de longo prazo e projeta sua continuação.</div></div>
-                <div class="tip-row"><div class="tip-dot" style="background:#fbbf24;"></div><div><strong>Linha amarela pontilhada</strong> — projeção por <em>Média Móvel Ponderada</em>: dá mais peso aos períodos recentes, capturando mudanças de ritmo.</div></div>
-                <div class="tip-row"><div class="tip-dot" style="background:rgba(52,211,153,0.4);width:14px;height:10px;border-radius:3px;"></div><div><strong>Faixa verde</strong> — intervalo de confiança de 90%: o valor real provavelmente ficará dentro dessa faixa. Ela se alarga no tempo porque a incerteza cresce.</div></div>
+                <p>Cada barra mostra o valor <strong>real</strong> (histórico) ou <strong>estimado</strong> (projeção) por período.</p>
+                <div class="tip-row"><div class="tip-dot" style="background:#4d7aff;"></div><div><strong>Barras azuis</strong> — valores reais já registrados.</div></div>
+                <div class="tip-row"><div class="tip-dot" style="background:#34d399;"></div><div><strong>Barras verdes</strong> — projeção por Regressão Linear, com base na tendência histórica.</div></div>
+                <p>Respeita os filtros aplicados no topo do painel (período, regional, unidade, setor, gênero).</p>
               </div>
             </div>
           </div>
           <div class="flex gap-3 text-xs" style="color:#8b90b8;">
             <span style="display:inline-flex;align-items:center;gap:5px;">
-              <span style="display:inline-block;width:18px;height:2px;background:#4d7aff;border-radius:2px;"></span> Histórico
+              <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#4d7aff;"></span> Histórico
             </span>
             <span style="display:inline-flex;align-items:center;gap:5px;">
-              <span style="display:inline-block;width:18px;height:2px;background:#34d399;border-radius:2px;border-style:dashed;"></span> Regressão Linear
-            </span>
-            <span style="display:inline-flex;align-items:center;gap:5px;">
-              <span style="display:inline-block;width:18px;height:2px;background:#fbbf24;border-radius:2px;border-style:dotted;"></span> Média Móvel
-            </span>
-            <span style="display:inline-flex;align-items:center;gap:5px;">
-              <span style="display:inline-block;width:18px;height:8px;border-radius:2px;background:rgba(52,211,153,0.15);"></span> Intervalo 90%
+              <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#34d399;"></span> Projeção
             </span>
           </div>
         </div>
-        <div id="fc-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;"></div>
         <div style="font-size:11px;color:#4a4f6e;margin-bottom:12px;" id="fc-model-info"></div>
-        <div class="chart-wrap-lg" style="height:360px;"><canvas id="forecastChart"></canvas></div>
+        <div class="chart-wrap-lg" style="height:320px;"><canvas id="forecastChart"></canvas></div>
       </div>
 
     </section>
@@ -2226,16 +2218,17 @@ function seasonalIndices(keys, vals, period) {
 
 // ── Main forecast function ─────────────────────────────────
 function buildForecast() {
-  const dateCol   = document.getElementById('fc-date-col')?.value    || state.dateCols[0] || state.catCols[0];
-  const metricCol = document.getElementById('fc-metric-col')?.value  || state.numCols[0];
-  const period    = document.getElementById('fc-period')?.value      || 'month';
-  const horizon   = parseInt(document.getElementById('fc-horizon')?.value || '6');
+  const dateCol   = state.dateCols[0] || state.catCols[0];
+  const metricCol = state.numCols[0];
+  const period    = 'month';
+  const horizon   = 6;
 
-  if (!dateCol || !metricCol || !state.raw.length) return;
+  const source = (state.filtered && state.filtered.length) ? state.filtered : state.raw;
+  if (!dateCol || !metricCol || !source.length) return;
 
   // ── 1. Aggregate historical data by period ─────────────
   const grouped = {};
-  state.raw.forEach(r => {
+  source.forEach(r => {
     const v = r[dateCol];
     const key = periodKey(v instanceof Date ? v : new Date(v), period);
     if (!key) return;
@@ -2248,374 +2241,59 @@ function buildForecast() {
   const histVals = histKeys.map(k => grouped[k].sum);
   const n = histKeys.length;
 
+  const infoEl = document.getElementById('fc-model-info');
+
   if (n < 3) {
-    document.getElementById('fc-model-info').textContent = 'Dados insuficientes. São necessários ao menos 3 períodos históricos.';
+    if (infoEl) infoEl.textContent = 'Dados insuficientes para projeção (mínimo 3 períodos históricos com esse filtro).';
+    destroyChart('forecast');
     return;
   }
 
-  // ── 2. Linear regression ────────────────────────────────
+  // ── 2. Linear regression sobre o histórico ──────────────
   const lr = linearRegression(histVals);
-  const lrLine = histVals.map((_,i) => lr.slope*i + lr.intercept);
 
-  // ── 3. Weighted moving average (window = min 3, max 6) ──
-  const maw = Math.min(6, Math.max(3, Math.floor(n/4)));
-  const wma = weightedMovingAvg(histVals, maw);
-
-  // ── 4. Residuals ────────────────────────────────────────
-  const residuals = histVals.map((v,i) => v - lrLine[i]);
-  const sd = stdDev(residuals);
-  const ci90 = 1.645 * sd; // 90% confidence interval (z = 1.645)
-
-  // ── 5. Seasonal index ───────────────────────────────────
-  const seasonal = seasonalIndices(histKeys, histVals, period);
-
-  // ── 6. Generate future periods ─────────────────────────
+  // ── 3. Projeta os próximos períodos ─────────────────────
   const futureKeys = [];
   const futureLR   = [];
-  const futureWMA  = [];
-  const futureCI_U = [];
-  const futureCI_L = [];
-
-  const lastWMAVal = wma[wma.length-1];
-
-  for (let h=1; h<=horizon; h++) {
-    const fKey = nextPeriodLabel(histKeys[histKeys.length-1], period, h);
-    futureKeys.push(fKey);
-
-    // LR projection
-    const lrProj = lr.slope*(n-1+h) + lr.intercept;
-
-    // WMA projection: extend linearly from last WMA + slope * h
-    const wmaProj = lastWMAVal + lr.slope * h;
-
-    // Seasonal adjustment (apply index if available)
-    let seasonAdj = 1;
-    if (seasonal) {
-      let sub = '';
-      if (period==='month') sub = fKey.split('-')[1];
-      if (period==='quarter') sub = fKey.split('-')[1];
-      seasonAdj = seasonal[sub] || 1;
-    }
-
-    const lrFinal  = Math.max(0, lrProj  * (seasonAdj > 0 ? seasonAdj : 1));
-    const wmaFinal = Math.max(0, wmaProj * (seasonAdj > 0 ? seasonAdj : 1));
-
-    // CI widens with horizon (uncertainty grows)
-    const horizonCI = ci90 * (1 + h * 0.15);
-
-    futureLR.push(lrFinal);
-    futureWMA.push(wmaFinal);
-    futureCI_U.push(lrFinal + horizonCI);
-    futureCI_L.push(Math.max(0, lrFinal - horizonCI));
+  for (let h = 1; h <= horizon; h++) {
+    futureKeys.push(nextPeriodLabel(histKeys[histKeys.length - 1], period, h));
+    futureLR.push(Math.max(0, lr.slope * (n - 1 + h) + lr.intercept));
   }
 
-  // ── 7. All labels combined ─────────────────────────────
-  const allLabels = [...histKeys, ...futureKeys];
-  const splitIdx  = histKeys.length; // index where future starts
+  const trendDir = lr.slope > 0.05 ? 'crescente' : lr.slope < -0.05 ? 'decrescente' : 'estável';
+  if (infoEl) {
+    infoEl.textContent = `Tendência ${trendDir} (R²=${(lr.r2*100).toFixed(0)}%) · projeção por regressão linear sobre ${n} períodos históricos`;
+  }
 
-  // ── 8. KPI cards ────────────────────────────────────────
-  const lastHist  = histVals[histVals.length-1];
-  const firstProj = futureLR[0];
-  const lastProj  = futureLR[futureLR.length-1];
-  const projGrowth = lastHist > 0 ? ((lastProj - lastHist)/Math.abs(lastHist)*100) : 0;
-  const trendDir   = lr.slope >= 0 ? '↑ Alta' : '↓ Queda';
-  const trendColor = lr.slope >= 0 ? '#34d399' : '#f87171';
-  const r2Label    = (lr.r2*100).toFixed(1) + '%';
-
-  // Textos de ajuda (mesmo padrão de help-btn/help-popup usado nos gráficos acima)
-  const fcHelp = {
-    hist: `<div class="help-popup-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4d7aff" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>Último Período Histórico</div><p>Valor <strong>real</strong> do último período (mês, trimestre ou ano, conforme o agrupamento escolhido) já registrado nos dados carregados.</p><p>É o ponto de partida a partir do qual as projeções seguintes são calculadas.</p>`,
-    next: `<div class="help-popup-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>Próximo Período (Projeção)</div><p>Valor estimado para o <strong>período seguinte</strong> ao último histórico, calculado por Regressão Linear.</p><p><strong>Intervalo</strong> — faixa de 90% de confiança: há 90% de chance do valor real cair dentro desses limites.</p>`,
-    horizon: `<div class="help-popup-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>Projeção no Horizonte Escolhido</div><p>Valor projetado para o <strong>último período do horizonte</strong> selecionado no filtro acima (ex.: daqui a 6 meses).</p><p><strong>Var. total</strong> — variação percentual entre o último valor histórico e essa projeção final.</p>`,
-    trend: `<div class="help-popup-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>Tendência Geral do Modelo</div><p><strong>Alta</strong> ou <strong>Queda</strong> indica o sentido da inclinação (slope) da Regressão Linear sobre todo o histórico.</p><p><strong>R²</strong> mede o quão bem a linha se ajusta aos dados reais — quanto mais próximo de 100%, mais confiável é a projeção. Valores baixos indicam dados irregulares ou sazonais.</p>`,
-  };
-
-  safeSet('fc-kpis','innerHTML', [
-    { label:'Último Período Histórico', val: fmtShort(lastHist), sub: histKeys[histKeys.length-1], color:'#4d7aff', help: fcHelp.hist },
-    { label:'Próximo Período (proj.)', val: fmtShort(firstProj), sub: `Intervalo: ${fmtShort(futureCI_L[0])} – ${fmtShort(futureCI_U[0])}`, color:'#34d399', help: fcHelp.next },
-    { label:`Projeção em ${horizon} períodos`, val: fmtShort(lastProj), sub: `Var. total: ${projGrowth>=0?'+':''}${projGrowth.toFixed(1)}%`, color: projGrowth>=0?'#34d399':'#f87171', help: fcHelp.horizon },
-    { label:'Tendência Geral', val: trendDir, sub: `R² = ${r2Label} — ajuste do modelo`, color: trendColor, help: fcHelp.trend },
-  ].map(k=>`<div class="kpi-card p-4"><div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:8px;"><div style="font-size:11px;color:#8b90b8;text-transform:uppercase;letter-spacing:0.05em;">${k.label}</div><div class="help-btn" tabindex="0" onclick="this.classList.toggle('active')">?<div class="help-popup">${k.help}</div></div></div><div style="font-size:20px;font-weight:800;color:${k.color};font-family:'JetBrains Mono',monospace;">${k.val}</div><div style="font-size:11px;color:#4a4f6e;margin-top:4px;">${k.sub}</div></div>`).join(''));
-
-  // Model info line
-  document.getElementById('fc-model-info').textContent =
-    `Modelo: Regressão Linear (slope ${lr.slope>=0?'+':''}${lr.slope.toFixed(2)}/período · R²=${r2Label}) + Média Móvel Ponderada (janela=${maw}) · Intervalo de confiança 90% (σ=${fmtShort(sd)}) · ${n} períodos históricos`;
-
-  // ── 9. Main forecast chart ─────────────────────────────
+  // ── 4. Monta o gráfico de barras (histórico + projeção) ──
   destroyChart('forecast');
 
-  // Build padded arrays: history has nulls in future slots, projections start from last hist point
-  const histData    = [...histVals, ...Array(horizon).fill(null)];
-  const lrHistData  = [...lrLine,   ...Array(horizon).fill(null)];
-  const lrFutData   = [...Array(splitIdx-1).fill(null), histVals[splitIdx-1], ...futureLR];
-  const wmaHistData = [...wma,      ...Array(horizon).fill(null)];
-  const wmaFutData  = [...Array(splitIdx-1).fill(null), wma[splitIdx-1], ...futureWMA];
-  const ciUData     = [...Array(splitIdx-1).fill(null), histVals[splitIdx-1], ...futureCI_U];
-  const ciLData     = [...Array(splitIdx-1).fill(null), histVals[splitIdx-1], ...futureCI_L];
+  const labels    = [...histKeys, ...futureKeys];
+  const histData  = [...histVals, ...Array(horizon).fill(null)];
+  const projData  = [...Array(n - 1).fill(null), histVals[n - 1], ...futureLR];
 
   const ctx = document.getElementById('forecastChart').getContext('2d');
   const d = chartDefaults();
   d.plugins.legend.display = false;
 
-  // Vertical line plugin for split
-  const splitLinePlugin = {
-    id: 'splitLine',
-    afterDraw(chart) {
-      const { ctx: c, chartArea, scales } = chart;
-      if (!scales.x) return;
-      const xPos = scales.x.getPixelForValue(splitIdx - 0.5);
-      if (xPos < chartArea.left || xPos > chartArea.right) return;
-      c.save();
-      c.beginPath();
-      c.moveTo(xPos, chartArea.top);
-      c.lineTo(xPos, chartArea.bottom);
-      c.strokeStyle = 'rgba(255,255,255,0.12)';
-      c.lineWidth = 1;
-      c.setLineDash([5,4]);
-      c.stroke();
-      c.setLineDash([]);
-      c.fillStyle = 'rgba(52,211,153,0.08)';
-      c.fillRect(xPos, chartArea.top, chartArea.right-xPos, chartArea.bottom-chartArea.top);
-      c.fillStyle = '#4a4f6e';
-      c.font = '10px Inter, sans-serif';
-      c.fillText('◀ Histórico', xPos-60, chartArea.top+14);
-      c.fillStyle = '#34d399';
-      c.fillText('Projeção ▶', xPos+8, chartArea.top+14);
-      c.restore();
-    }
-  };
-
   state.charts.forecast = new Chart(ctx, {
-    type: 'line',
-    plugins: [splitLinePlugin],
+    type: 'bar',
     data: {
-      labels: allLabels,
+      labels,
       datasets: [
-        // CI upper (hidden, just for fill)
-        {
-          label: 'CI Superior',
-          data: ciUData,
-          borderColor: 'transparent',
-          backgroundColor: 'rgba(52,211,153,0.10)',
-          fill: '+1',
-          pointRadius: 0,
-          tension: 0.3,
-          order: 5,
-        },
-        // CI lower
-        {
-          label: 'CI Inferior',
-          data: ciLData,
-          borderColor: 'transparent',
-          backgroundColor: 'rgba(52,211,153,0.10)',
-          fill: false,
-          pointRadius: 0,
-          tension: 0.3,
-          order: 5,
-        },
-        // Historical data
-        {
-          label: 'Histórico',
-          data: histData,
-          borderColor: '#4d7aff',
-          backgroundColor: 'rgba(77,122,255,0.08)',
-          borderWidth: 2.5,
-          pointRadius: histData.map((_,i)=>i<splitIdx?3:0),
-          pointBackgroundColor: '#4d7aff',
-          tension: 0.3,
-          fill: false,
-          order: 1,
-        },
-        // LR historical fit
-        {
-          label: 'Reg. Linear (hist.)',
-          data: lrHistData,
-          borderColor: 'rgba(52,211,153,0.5)',
-          borderWidth: 1.5,
-          borderDash: [6,3],
-          pointRadius: 0,
-          tension: 0,
-          fill: false,
-          order: 3,
-        },
-        // LR future projection
-        {
-          label: 'Projeção Linear',
-          data: lrFutData,
-          borderColor: '#34d399',
-          backgroundColor: 'rgba(52,211,153,0.15)',
-          borderWidth: 2.5,
-          borderDash: [8,4],
-          pointRadius: lrFutData.map((v,i)=>v!==null&&i>=splitIdx?5:0),
-          pointBackgroundColor: '#34d399',
-          pointBorderColor: '#0d0f1c',
-          pointBorderWidth: 2,
-          tension: 0.3,
-          fill: false,
-          order: 2,
-        },
-        // WMA historical
-        {
-          label: 'Média Móvel (hist.)',
-          data: wmaHistData,
-          borderColor: 'rgba(251,191,36,0.4)',
-          borderWidth: 1.5,
-          borderDash: [3,3],
-          pointRadius: 0,
-          tension: 0.4,
-          fill: false,
-          order: 4,
-        },
-        // WMA future
-        {
-          label: 'Projeção Méd. Móvel',
-          data: wmaFutData,
-          borderColor: '#fbbf24',
-          borderWidth: 2,
-          borderDash: [4,4],
-          pointRadius: wmaFutData.map((v,i)=>v!==null&&i>=splitIdx?4:0),
-          pointBackgroundColor: '#fbbf24',
-          tension: 0.3,
-          fill: false,
-          order: 3,
-        },
+        { label: 'Histórico', data: histData, backgroundColor: 'rgba(77,122,255,0.8)', borderRadius: 4 },
+        { label: 'Projeção',  data: projData,  backgroundColor: 'rgba(52,211,153,0.6)', borderRadius: 4 },
       ]
     },
     options: {
       ...d,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        ...d.plugins,
-        tooltip: {
-          ...d.plugins.tooltip,
-          callbacks: {
-            label: ctx => {
-              if (ctx.raw === null) return null;
-              return ` ${ctx.dataset.label}: ${fmtShort(ctx.raw)}`;
-            }
-          },
-          filter: item => item.raw !== null,
-        }
-      },
       scales: {
-        x: {
-          ...d.scales.x,
-          ticks: { ...d.scales.x.ticks, maxTicksLimit: 16, maxRotation: 45 }
-        },
+        x: { ...d.scales.x, ticks: { ...d.scales.x.ticks, maxTicksLimit: 16, maxRotation: 45 } },
         y: { ...d.scales.y }
       }
     }
   });
 
-  // ── 10. Residuals chart (só roda se a aba Projeção ainda existir) ──
-  if (document.getElementById('residualChart')) {
-    destroyChart('residual');
-    const rCtx = document.getElementById('residualChart').getContext('2d');
-    const rd = chartDefaults();
-    rd.plugins.legend.display = false;
-    state.charts.residual = new Chart(rCtx, {
-      type: 'bar',
-      data: {
-        labels: histKeys,
-        datasets: [{
-          label: 'Resíduo',
-          data: residuals,
-          backgroundColor: residuals.map(v => v >= 0 ? 'rgba(52,211,153,0.7)' : 'rgba(248,113,113,0.7)'),
-          borderRadius: 3,
-        }]
-      },
-      options: {
-        ...rd,
-        plugins: { ...rd.plugins, annotation: {} },
-        scales: {
-          ...rd.scales,
-          x: { ...rd.scales.x, ticks: { ...rd.scales.x.ticks, maxTicksLimit: 10 } },
-          y: {
-            ...rd.scales.y,
-            title: { display: true, text: 'Resíduo', color: '#8b90b8', font: { size: 10 } }
-          }
-        }
-      }
-    });
-  }
-
-  // ── 11. Seasonal chart (só roda se a aba Projeção ainda existir) ──
-  if (document.getElementById('seasonalChart')) {
-    destroyChart('seasonal');
-    const sCtx = document.getElementById('seasonalChart').getContext('2d');
-    if (seasonal) {
-      const subLabels = Object.keys(seasonal).sort();
-      const subVals   = subLabels.map(k => seasonal[k]);
-      const sd2 = chartDefaults();
-      sd2.plugins.legend.display = false;
-      state.charts.seasonal = new Chart(sCtx, {
-        type: 'bar',
-        data: {
-          labels: subLabels.map(s => period==='month' ? ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][parseInt(s)-1] || s : s),
-          datasets: [{
-            label: 'Índice Sazonal',
-            data: subVals,
-            backgroundColor: subVals.map(v => v >= 1 ? 'rgba(77,122,255,0.75)' : 'rgba(167,139,250,0.6)'),
-            borderRadius: 4,
-          }]
-        },
-        options: {
-          ...sd2,
-          scales: {
-            ...sd2.scales,
-            y: {
-              ...sd2.scales.y,
-              title: { display: true, text: 'Índice (1 = média)', color: '#8b90b8', font: { size: 10 } }
-            }
-          },
-          plugins: {
-            ...sd2.plugins,
-            tooltip: {
-              ...sd2.plugins.tooltip,
-              callbacks: {
-                label: ctx => ` Índice: ${ctx.raw.toFixed(3)} (${ctx.raw>=1?'+':''}${((ctx.raw-1)*100).toFixed(1)}% vs média)`
-              }
-            }
-          }
-        }
-      });
-    } else {
-      sCtx.canvas.parentElement.innerHTML = '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#4a4f6e;font-size:13px;">Dados anuais — sem sub-período para análise sazonal</div>';
-    }
-  }
-
-  // ── 12. Forecast table ────────────────────────────────
-  safeSet('fc-table-head','innerHTML', `<tr><th>Período</th><th>Tipo</th><th>Projeção Linear</th><th>Projeção Méd. Móvel</th><th>Limite Inferior (90%)</th><th>Limite Superior (90%)</th><th>Var. vs Último Real</th></tr>`);
-
-  // Historical rows (last 5) + future rows
-  const histRows = histKeys.slice(-5).map((k,idx) => {
-    const i = histKeys.length - 5 + idx;
-    return `<tr>
-      <td><strong style="color:#e2e4f0;">${k}</strong></td>
-      <td><span class="badge badge-blue">Histórico</span></td>
-      <td class="num-value">${fmt(histVals[i],2)}</td>
-      <td class="num-value">${fmt(wma[i],2)}</td>
-      <td style="color:#4a4f6e;">—</td>
-      <td style="color:#4a4f6e;">—</td>
-      <td style="color:#4a4f6e;">—</td>
-    </tr>`;
-  });
-
-  const futRows = futureKeys.map((k,h) => {
-    const varPct = lastHist > 0 ? ((futureLR[h]-lastHist)/Math.abs(lastHist)*100) : 0;
-    const varColor = varPct >= 0 ? '#34d399' : '#f87171';
-    return `<tr>
-      <td><strong style="color:#34d399;">${k}</strong></td>
-      <td><span class="badge badge-green">Projeção</span></td>
-      <td class="num-value" style="color:#34d399;">${fmt(futureLR[h],2)}</td>
-      <td class="num-value" style="color:#fbbf24;">${fmt(futureWMA[h],2)}</td>
-      <td class="num-value">${fmt(futureCI_L[h],2)}</td>
-      <td class="num-value">${fmt(futureCI_U[h],2)}</td>
-      <td style="color:${varColor};font-weight:600;">${varPct>=0?'+':''}${varPct.toFixed(1)}%</td>
-    </tr>`;
-  });
-
-  safeSet('fc-table-body','innerHTML', histRows.join('') + futRows.join(''));
 }
 
 // ─── HELP PORTAL — SMART POSITIONING ─────────────────────────────
@@ -3515,6 +3193,7 @@ function applyHSEFilters() {
   buildKPIs();
   buildTrendChart();
   buildAllHSECharts();
+  buildForecast();
   generateAIInsightsAuto();
 }
 
@@ -4538,6 +4217,7 @@ function applyAllFilters() {
   buildKPIs();
   buildTrendChart();
   buildAllHSECharts();
+  buildForecast();
   generateAIInsightsAuto();
 }
 
@@ -4556,6 +4236,7 @@ function clearAllFilters() {
   buildKPIs();
   buildTrendChart();
   buildAllHSECharts();
+  buildForecast();
   generateAIInsightsAuto();
 }
 

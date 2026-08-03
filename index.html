@@ -767,7 +767,7 @@ tailwind.config = {
       </div>
 
       <!-- ══ LINHA 1: 7 KPI CARDS HSE ══ -->
-      <div id="kpi-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px;"></div>
+      <div id="kpi-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;"></div>
 
       <!-- ══ LINHA 2: Regional + Setor + Turno ══ -->
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
@@ -1340,18 +1340,6 @@ function buildKPIs() {
   const totalDias   = sumOf(colDias);
   const diasPorAcid = totalAcid > 0 ? totalDias / totalAcid : 0;
 
-  // Freq/Gravity rates — só é calculável de verdade com uma coluna real de Horas-Homem (HH).
-  // Taxa Frequência = (nº acidentes × 1.000.000) / HH trabalhadas
-  // ANTES, quando não havia coluna de HH, o código "estimava" totalHH como totalAcid * 2000.
-  // Isso é um bug: como totalHH fica sempre proporcional a totalAcid por um fator fixo, o
-  // resultado da fórmula (totalAcid * 1.000.000) / (totalAcid * 2000) simplifica pra 500
-  // SEMPRE, não importa quais sejam os dados — foi por isso que o card ficava travado em 500.
-  // Agora só calculamos a taxa quando existe uma coluna de HH de verdade; sem ela, mostramos
-  // "N/D" em vez de um número fabricado e enganoso.
-  const hhColCandidate = nums.find(c => /hh|hora[\s._-]*homem|horas[\s._-]*trabalhadas/i.test(c));
-  const totalHH   = hhColCandidate ? sumOf(hhColCandidate) : 0;
-  const taxaFreq  = (hhColCandidate && totalHH > 0) ? (totalAcid * 1000000) / totalHH : null;
-
   // Dias sem acidente - data do ÚLTIMO acidente (prioriza coluna de data do acidente/ocorrência
   // sobre outras datas genéricas como "cadastro" ou "abertura") contada até hoje.
   let diasSemAcid = 0;
@@ -1399,10 +1387,9 @@ function buildKPIs() {
     grid.appendChild(d);
   };
 
-  card('⚠️', 'Total de Acidentes',       fmt(totalAcid,0),      `${source.length} registros`,        deltaAcid,           true,  '', '#f87171');
-  card('🏥', 'Acident. com Afastamento', fmt(totalAfas,0),      `${totalAcid>0?(totalAfas/totalAcid*100).toFixed(1):0}% do total`, deltaAcid*0.8, true, '', '#f97316');
-  card('📊', 'Taxa de Frequência',       taxaFreq !== null ? fmt(taxaFreq,2) : 'N/D', taxaFreq !== null ? `/1M h trab.` : 'Requer coluna de HH na planilha', taxaFreq !== null ? deltaAcid*0.7 : null, true,  '', '#a78bfa');
-  card('✅', 'Dias Sem Acidentes',       fmt(diasSemAcid,0),    `Atual sequência`,                    -(deltaAcid*0.5),    false, 'dias', '#34d399');
+  card('⚠️', 'Total de Acidentes',       fmt(totalAcid,0),      `${source.length} registros`,        null,  true,  '', '#f87171');
+  card('🏥', 'Acident. com Afastamento', fmt(totalAfas,0),      `${totalAcid>0?(totalAfas/totalAcid*100).toFixed(1):0}% do total`, null, true, '', '#f97316');
+  card('✅', 'Dias Sem Acidentes',       fmt(diasSemAcid,0),    `Atual sequência`,                    null,  false, 'dias', '#34d399');
 
   // HSE Score — gauge 0-100.
   // A fórmula anterior dependia de Taxa de Frequência/Gravidade calculadas a partir de uma
@@ -1425,6 +1412,20 @@ function buildKPIs() {
   )));
   const scoreColor = score >= 80 ? '#34d399' : score >= 60 ? '#fbbf24' : '#f87171';
   const scoreLabel = score >= 80 ? 'Bom' : score >= 60 ? 'Regular' : 'Crítico';
+  // Legenda de faixas do HSE Score — pedido do cliente para deixar claro o que cada faixa
+  // significa, em vez de só mostrar o número e o rótulo isolados. A faixa atual fica destacada
+  // (cor cheia + negrito), as outras ficam esmaecidas.
+  const scoreRanges = [
+    { lo: 80, hi: 100, label: 'Bom',     color: '#34d399' },
+    { lo: 60, hi: 79,  label: 'Regular', color: '#fbbf24' },
+    { lo: 0,  hi: 59,  label: 'Crítico', color: '#f87171' },
+  ];
+  const legendHtml = scoreRanges.map(r => {
+    const active = score >= r.lo && score <= r.hi;
+    return `<span style="display:inline-flex;align-items:center;gap:3px;font-size:8px;font-weight:${active?'700':'400'};color:${active?r.color:'#4a4f6e'};opacity:${active?1:0.6};">
+      <span style="width:6px;height:6px;border-radius:50%;background:${r.color};display:inline-block;"></span>${r.lo}-${r.hi} ${r.label}
+    </span>`;
+  }).join('<span style="color:#2a2f4d;">·</span>');
   const d = document.createElement('div');
   d.style.cssText = `background:#0d0f1c;border:1px solid #1a1e35;border-radius:10px;padding:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;position:relative;overflow:hidden;`;
   d.innerHTML = `
@@ -1437,7 +1438,7 @@ function buildKPIs() {
       <text x="40" y="36" text-anchor="middle" font-size="16" font-weight="900" fill="${scoreColor}" font-family="monospace">${score}</text>
     </svg>
     <div style="font-size:11px;font-weight:700;color:${scoreColor};">${scoreLabel}</div>
-    <div style="font-size:9px;color:#4a4f6e;">vs mês anterior</div>`;
+    <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:center;margin-top:2px;">${legendHtml}</div>`;
   grid.appendChild(d);
 
   // Nota: o rótulo "Última atualização" (last-update-label) NÃO é mais definido aqui.

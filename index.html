@@ -1222,6 +1222,21 @@ function processData(rows) {
     else { state.types[h] = 'string'; state.catCols.push(h); }
   });
 
+  // A coluna de Gravidade (coluna M da planilha, confirmado pelo cliente) precisa ficar
+  // sempre como categórica (texto), mesmo que os valores pareçam número (ex.: códigos de
+  // severidade tipo 1/2/3 ou células vazias interpretadas como número). Se ela cair como
+  // "number" acima, o passo de normalização logo abaixo converteria os rótulos de gravidade
+  // (ex.: "Média", "Alta") para 0, e foi exatamente isso que causava o gráfico de Gravidade
+  // mostrar números/códigos errados em vez das categorias reais.
+  {
+    const gravCol = colByLetter('M');
+    if (gravCol && state.types[gravCol] === 'number') {
+      state.types[gravCol] = 'string';
+      state.numCols = state.numCols.filter(c => c !== gravCol);
+      if (!state.catCols.includes(gravCol)) state.catCols.push(gravCol);
+    }
+  }
+
   // Normalize numbers
   state.raw = rows.map(r => {
     const row = {...r};
@@ -1310,7 +1325,9 @@ function buildKPIs() {
   const colAcid   = findCol(nums, ['acident','ocorrência','ocorrencia','incid','total','quant'], 0);
   const colAfas   = findCol(nums, ['afastamento','afastado','afasta'], 1);
   const colDias   = findCol(nums, ['dias','afastamento','afastado','perdido','ausência','ausencia'], 2);
-  const colGrav   = cats.find(c => /gravidade|severidade|classif/i.test(c)) || findColumn(['gravidade','severidade','classificação','classe','grau','nível','nivel'], SEVERITY_VALUE_TERMS);
+  // Gravidade fica sempre na coluna M da planilha (confirmado pelo cliente) — usa direto
+  // por posição, com busca por nome/valor como respaldo apenas se a coluna M não existir.
+  const colGrav   = colByLetter('M') || cats.find(c => /gravidade|severidade|classif/i.test(c)) || findColumn(['gravidade','severidade','classificação','classe','grau','nível','nivel'], SEVERITY_VALUE_TERMS);
   const colCat    = cats.find(c => /cat\b|comunicação|abertura/i.test(c));
 
   // ── Calculations ──────────────────────────────────────────────
@@ -4024,7 +4041,8 @@ function findColumn(keywords, valueTerms) {
 
 function findColumnByName(name) {
   const lower = name.toLowerCase();
-  return state.catCols.find(c => c.toLowerCase().includes(lower) || lower.includes(c.toLowerCase())) || null;
+  const allCols = [...state.catCols, ...state.numCols];
+  return allCols.find(c => c.toLowerCase().includes(lower) || lower.includes(c.toLowerCase())) || null;
 }
 
 function buildHSECatChart(canvasId, col, chartType, colorOffset) {
@@ -4251,12 +4269,9 @@ function buildAllHSECharts() {
   if (tipoBtns && colTipo) tipoBtns.dataset.col = colTipo;
 
   // ── Gravidade — horizontal bars ───────────────────────────────
-  // 1º tenta pelo NOME do cabeçalho ("gravidade", "severidade" etc.). Se nenhum bater,
-  // procura pela coluna categórica cujos VALORES parecem níveis de gravidade (alta/média/
-  // baixa/leve/grave...) em vez de cair numa coluna por posição fixa (coluna M), que já
-  // causou o gráfico mostrar números/códigos errados quando a planilha do cliente tinha
-  // outro layout.
-  const colGrav = findColumn(
+  // Confirmado pelo cliente: a Gravidade está sempre na coluna M da planilha.
+  // Usa a posição diretamente; só cai no nome/valor se a planilha não tiver coluna M.
+  const colGrav = colByLetter('M') || findColumn(
     ['gravidade','severidade','classificação','classe','grau','nível','nivel','risco'],
     SEVERITY_VALUE_TERMS
   );

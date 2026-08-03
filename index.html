@@ -2221,7 +2221,7 @@ function buildForecast() {
   const dateCol   = state.dateCols[0] || state.catCols[0];
   const metricCol = state.numCols[0];
   const period    = 'month';
-  const horizon   = 6;
+  const horizon   = 3;
 
   const source = (state.filtered && state.filtered.length) ? state.filtered : state.raw;
   if (!dateCol || !metricCol || !source.length) return;

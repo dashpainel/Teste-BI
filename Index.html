@@ -3424,6 +3424,15 @@ async function loadFromUrl(override) {
   }
 }
 
+// ── Verifica se deve recarregar automaticamente a última URL salva ──
+function checkAutoReload() {
+  const savedUrl   = localStorage.getItem(LS_URL_KEY);
+  const autoReload = localStorage.getItem(LS_AUTORELOAD_KEY) === 'true';
+  if (savedUrl && autoReload) {
+    loadFromUrl(savedUrl);
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════
 // ─── PAINEL DE CONFIGURAÇÃO ───────────────────────────────────
 // ═══════════════════════════════════════════════════════════════

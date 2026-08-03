@@ -1310,7 +1310,7 @@ function buildKPIs() {
   const colAcid   = findCol(nums, ['acident','ocorrência','ocorrencia','incid','total','quant'], 0);
   const colAfas   = findCol(nums, ['afastamento','afastado','afasta'], 1);
   const colDias   = findCol(nums, ['dias','afastamento','afastado','perdido','ausência','ausencia'], 2);
-  const colGrav   = cats.find(c => /gravidade|severidade|classif/i.test(c)) || colByLetter('M');
+  const colGrav   = cats.find(c => /gravidade|severidade|classif/i.test(c)) || findColumn(['gravidade','severidade','classificação','classe','grau','nível','nivel'], SEVERITY_VALUE_TERMS);
   const colCat    = cats.find(c => /cat\b|comunicação|abertura/i.test(c));
 
   // ── Calculations ──────────────────────────────────────────────
@@ -3622,33 +3622,8 @@ Responda APENAS em JSON válido sem markdown:
     const clean = text.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(clean);
 
-    // Render insights
-    const iColors  = ['#f87171', '#fbbf24', '#4d7aff', '#34d399'];
-    const iBgs     = ['rgba(248,113,113,0.08)', 'rgba(251,191,36,0.08)', 'rgba(77,122,255,0.08)', 'rgba(52,211,153,0.08)'];
-    const iBorders = ['rgba(248,113,113,0.2)',  'rgba(251,191,36,0.2)',  'rgba(77,122,255,0.2)',  'rgba(52,211,153,0.2)'];
-    insEl.innerHTML = parsed.insights.map((ins, i) => `
-      <div style="display:flex;gap:9px;padding:9px 11px;background:${iBgs[i]};border:1px solid ${iBorders[i]};border-radius:7px;margin-bottom:7px;">
-        <div style="font-size:16px;flex-shrink:0;line-height:1.4;">${ins.emoji}</div>
-        <div><div style="font-size:11px;font-weight:700;color:${iColors[i]};margin-bottom:2px;">${ins.titulo}</div>
-        <div style="font-size:10px;color:#c8cbdf;line-height:1.5;">${ins.descricao}</div></div>
-      </div>`).join('');
-
-    // Render recommendations
-    const pCfg = {
-      'alta':  { color:'#f87171', bg:'rgba(248,113,113,0.08)', border:'rgba(248,113,113,0.2)', label:'🔴 Alta' },
-      'média': { color:'#fbbf24', bg:'rgba(251,191,36,0.08)',  border:'rgba(251,191,36,0.2)',  label:'🟡 Média' },
-      'baixa': { color:'#34d399', bg:'rgba(52,211,153,0.08)', border:'rgba(52,211,153,0.2)',  label:'🟢 Baixa' },
-    };
-    recsEl.innerHTML = parsed.recomendacoes.map(rec => {
-      const cfg = pCfg[rec.prioridade] || pCfg['média'];
-      return `<div style="display:flex;gap:9px;padding:8px 11px;background:${cfg.bg};border:1px solid ${cfg.border};border-radius:7px;margin-bottom:6px;">
-        <div style="width:16px;height:16px;border-radius:50%;background:${cfg.color};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
-          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <div><div style="font-size:9px;font-weight:700;color:${cfg.color};margin-bottom:2px;">${cfg.label}</div>
-        <div style="font-size:10px;color:#c8cbdf;line-height:1.5;">${rec.acao}</div></div>
-      </div>`;
-    }).join('');
+    renderAIAnalysisResult(parsed);
+    saveAIAnalysisCache(parsed);
 
   } catch(e) {
     // Fallback to local generation
@@ -3657,6 +3632,92 @@ Responda APENAS em JSON válido sem markdown:
   } finally {
     if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Analisar'; }
   }
+}
+
+// ── Renderiza o resultado da análise (insights + recomendações) ────
+// Extraído para função própria para poder ser chamado tanto com um resultado
+// novo vindo da API quanto com um resultado salvo em cache (localStorage),
+// sem precisar gastar tokens de novo toda vez que o dashboard é aberto.
+function renderAIAnalysisResult(parsed, cachedAt) {
+  const insEl  = document.getElementById('ai-insights-content');
+  const recsEl = document.getElementById('ai-recs-content');
+  if (!insEl || !recsEl) return;
+
+  const cacheNote = cachedAt
+    ? `<div style="font-size:9px;color:#4a4f6e;margin-bottom:7px;display:flex;align-items:center;gap:5px;">
+         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4a4f6e" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+         Última análise: ${cachedAt}
+       </div>`
+    : '';
+
+  // Render insights
+  const iColors  = ['#f87171', '#fbbf24', '#4d7aff', '#34d399'];
+  const iBgs     = ['rgba(248,113,113,0.08)', 'rgba(251,191,36,0.08)', 'rgba(77,122,255,0.08)', 'rgba(52,211,153,0.08)'];
+  const iBorders = ['rgba(248,113,113,0.2)',  'rgba(251,191,36,0.2)',  'rgba(77,122,255,0.2)',  'rgba(52,211,153,0.2)'];
+  insEl.innerHTML = cacheNote + parsed.insights.map((ins, i) => `
+    <div style="display:flex;gap:9px;padding:9px 11px;background:${iBgs[i]};border:1px solid ${iBorders[i]};border-radius:7px;margin-bottom:7px;">
+      <div style="font-size:16px;flex-shrink:0;line-height:1.4;">${ins.emoji}</div>
+      <div><div style="font-size:11px;font-weight:700;color:${iColors[i]};margin-bottom:2px;">${ins.titulo}</div>
+      <div style="font-size:10px;color:#c8cbdf;line-height:1.5;">${ins.descricao}</div></div>
+    </div>`).join('');
+
+  // Render recommendations
+  const pCfg = {
+    'alta':  { color:'#f87171', bg:'rgba(248,113,113,0.08)', border:'rgba(248,113,113,0.2)', label:'🔴 Alta' },
+    'média': { color:'#fbbf24', bg:'rgba(251,191,36,0.08)',  border:'rgba(251,191,36,0.2)',  label:'🟡 Média' },
+    'baixa': { color:'#34d399', bg:'rgba(52,211,153,0.08)', border:'rgba(52,211,153,0.2)',  label:'🟢 Baixa' },
+  };
+  recsEl.innerHTML = cacheNote + parsed.recomendacoes.map(rec => {
+    const cfg = pCfg[rec.prioridade] || pCfg['média'];
+    return `<div style="display:flex;gap:9px;padding:8px 11px;background:${cfg.bg};border:1px solid ${cfg.border};border-radius:7px;margin-bottom:6px;">
+      <div style="width:16px;height:16px;border-radius:50%;background:${cfg.color};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div><div style="font-size:9px;font-weight:700;color:${cfg.color};margin-bottom:2px;">${cfg.label}</div>
+      <div style="font-size:10px;color:#c8cbdf;line-height:1.5;">${rec.acao}</div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── Cache local da última análise de IA ─────────────────────────
+// Guarda o resultado no localStorage do navegador (por cliente/domínio), junto com
+// uma "impressão digital" dos dados (nº de linhas + colunas + nome do arquivo).
+// Assim, ao reabrir o dashboard com os MESMOS dados, mostramos a última análise sem
+// chamar a API de novo — só gasta token quando o usuário clica em "Analisar" de propósito
+// ou quando os dados mudaram (planilha diferente/atualizada).
+const LS_AI_ANALYSIS = 'painelhse_ai_analysis_cache';
+
+function getDataFingerprint() {
+  if (!state.raw.length) return '';
+  return `${state.fileName || ''}|${state.raw.length}|${state.headers.join(',')}`;
+}
+
+function saveAIAnalysisCache(parsed) {
+  try {
+    const payload = {
+      parsed,
+      fingerprint: getDataFingerprint(),
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem(LS_AI_ANALYSIS, JSON.stringify(payload));
+  } catch(e) { console.error('saveAIAnalysisCache:', e); }
+}
+
+function loadAIAnalysisCache() {
+  try {
+    const raw = localStorage.getItem(LS_AI_ANALYSIS);
+    if (!raw) return null;
+    const payload = JSON.parse(raw);
+    if (!payload || payload.fingerprint !== getDataFingerprint()) return null;
+    return payload;
+  } catch(e) { return null; }
+}
+
+function formatCacheTimestamp(iso) {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+  } catch(e) { return ''; }
 }
 
 // ── Gráfico de Tendência para os Próximos 3 Meses ──────────────
@@ -3756,9 +3817,17 @@ function generateAIRecommendations() { runFullAIAnalysis(); }
 function generateAIInsightsAuto() {
   // Gráfico de tendência é estatístico e não depende de IA — já renderiza na hora
   buildTrendForecastChart();
+
   // A análise de IA (insights + recomendações) NÃO roda mais automaticamente —
-  // cada chamada consome créditos da API, então só dispara quando o usuário
-  // clica no botão "Analisar" (ver btn-insights / runFullAIAnalysis()).
+  // cada chamada consome créditos da API. Mas se já existe uma análise salva para
+  // ESTES MESMOS dados (mesmo arquivo/nº de linhas/colunas), mostramos ela direto,
+  // em vez de pedir pro usuário clicar em "Analisar" de novo toda vez que abre o painel.
+  const cached = loadAIAnalysisCache();
+  if (cached) {
+    renderAIAnalysisResult(cached.parsed, formatCacheTimestamp(cached.savedAt));
+    return;
+  }
+
   const insEl  = document.getElementById('ai-insights-content');
   const recsEl = document.getElementById('ai-recs-content');
   const cta = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:18px 10px;text-align:center;">
@@ -3903,7 +3972,17 @@ const HSE_CHART_CONFIG = [
   { id: 'responsavelChart', keywords: ['responsavel','responsável','causa','gestor','lider','líder'],       colors: 12 },
 ];
 
-function findColumn(keywords) {
+// Termos de valor típicos de coluna de Gravidade/Severidade (classificação de risco em HSE).
+// Usados como fallback quando o NOME da coluna não bate com as keywords (ex.: coluna chamada
+// só "Classificação" ou "Nível") — nesse caso, olhamos o CONTEÚDO das células.
+const SEVERITY_VALUE_TERMS = [
+  'leve','baixa','baixo','média','media','médio','medio','moderada','moderado',
+  'alta','alto','grave','gravíssim','gravissim','crítica','critica','crítico','critico',
+  'fatal','óbito','obito','sem afastamento','com afastamento','near miss','quase acidente',
+  'incidente','acidente com','acidente sem'
+];
+
+function findColumn(keywords, valueTerms) {
   if (!state.raw.length) return null;
   const allCols = [...state.catCols, ...state.numCols];
   // Strip numeric prefixes e.g. "5. Turno" -> "turno", "12. Gravidade" -> "gravidade"
@@ -3911,14 +3990,36 @@ function findColumn(keywords) {
     const clean = col.toLowerCase().replace(/^\d+[\s._-]*\.?\s*/, '');
     if (keywords.some(k => clean.includes(k.toLowerCase()) || col.toLowerCase().includes(k.toLowerCase()))) return col;
   }
-  // Fallback: score by values
+  // Fallback 1: score pelo NOME das keywords aparecendo dentro dos valores das células
+  // (cobre casos raros onde a keyword está no valor mas não no cabeçalho)
   let best = null, bestScore = 0;
   for (const col of state.catCols) {
     const vals = state.raw.slice(0,50).map(r => String(r[col]||'').toLowerCase());
     const score = vals.filter(v => keywords.some(k => v.includes(k.toLowerCase()))).length;
     if (score > bestScore) { bestScore = score; best = col; }
   }
-  return bestScore > 1 ? best : null;
+  if (bestScore > 1) return best;
+
+  // Fallback 2: se foram passados termos de valor específicos (ex.: níveis de gravidade
+  // como "alta/média/baixa"), procura a coluna categórica cujos valores mais batem com eles.
+  // Isso evita cair numa coluna numérica errada (ex.: um ID) quando o cabeçalho não tem
+  // "gravidade" no nome.
+  if (valueTerms && valueTerms.length) {
+    best = null; bestScore = 0;
+    for (const col of state.catCols) {
+      const vals = state.raw.slice(0,80).map(r => String(r[col]||'').toLowerCase().trim()).filter(Boolean);
+      if (!vals.length) continue;
+      const matches = vals.filter(v => valueTerms.some(t => v.includes(t))).length;
+      const ratio = matches / vals.length;
+      // Exige que pelo menos 40% dos valores amostrados pareçam níveis de gravidade,
+      // e um número pequeno de categorias distintas (gravidade normalmente tem poucos níveis)
+      const distinct = new Set(vals).size;
+      if (ratio >= 0.4 && distinct <= 12 && matches > bestScore) { bestScore = matches; best = col; }
+    }
+    if (best) return best;
+  }
+
+  return null;
 }
 
 function findColumnByName(name) {
@@ -3930,7 +4031,28 @@ function buildHSECatChart(canvasId, col, chartType, colorOffset) {
   if (hseCharts[canvasId]) { hseCharts[canvasId].destroy(); delete hseCharts[canvasId]; }
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
-  if (!col || !state.raw.length) return;
+  if (!col || !state.raw.length) {
+    // Mostra aviso em vez de deixar o gráfico anterior/errado — sem remover o <canvas> do DOM,
+    // para que volte a renderizar normalmente assim que a coluna for identificada (ex.: depois
+    // de trocar de planilha ou aplicar filtros).
+    canvas.style.display = 'none';
+    if (canvas.parentElement) {
+      let msg = canvas.parentElement.querySelector('.hse-chart-empty-msg');
+      if (!msg) {
+        msg = document.createElement('div');
+        msg.className = 'hse-chart-empty-msg';
+        msg.style.cssText = 'height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#4a4f6e;text-align:center;padding:0 12px;';
+        canvas.parentElement.appendChild(msg);
+      }
+      msg.textContent = 'Coluna não identificada na planilha';
+    }
+    return;
+  }
+  canvas.style.display = '';
+  if (canvas.parentElement) {
+    const msg = canvas.parentElement.querySelector('.hse-chart-empty-msg');
+    if (msg) msg.remove();
+  }
 
   const source   = state.filtered.length ? state.filtered : state.raw;
   const grouped  = {};
@@ -4129,9 +4251,15 @@ function buildAllHSECharts() {
   if (tipoBtns && colTipo) tipoBtns.dataset.col = colTipo;
 
   // ── Gravidade — horizontal bars ───────────────────────────────
-  // Se nenhum cabeçalho bater com as palavras-chave, usa a coluna M da planilha (onde a
-  // gravidade está registrada nesta base) como referência direta pela posição.
-  const colGrav = findColumn(['gravidade','severidade','classificação','classe','grau','12. gravidade','gravidade da','gravidade ocorr']) || colByLetter('M');
+  // 1º tenta pelo NOME do cabeçalho ("gravidade", "severidade" etc.). Se nenhum bater,
+  // procura pela coluna categórica cujos VALORES parecem níveis de gravidade (alta/média/
+  // baixa/leve/grave...) em vez de cair numa coluna por posição fixa (coluna M), que já
+  // causou o gráfico mostrar números/códigos errados quando a planilha do cliente tinha
+  // outro layout.
+  const colGrav = findColumn(
+    ['gravidade','severidade','classificação','classe','grau','nível','nivel','risco'],
+    SEVERITY_VALUE_TERMS
+  );
   buildHSECatChart('gravidadeChart', colGrav, 'bar', 10);
   const gravBtns = document.getElementById('gravidade-btns');
   if (gravBtns && colGrav) gravBtns.dataset.col = colGrav;

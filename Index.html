@@ -3265,6 +3265,26 @@ async function loadFromUrl(override) {
 
   const isGoogle = /docs\.google\.com|drive\.google\.com|sheets\.google\.com/.test(rawUrl);
 
+  // ── Se o perfil Google já está salvo mas o script do GSI (accounts.google.com/gsi/client)
+  //    ainda não terminou de carregar/inicializar (gTokenClient ainda null), espera um pouco
+  //    antes de decidir que o usuário "não está autenticado". Sem isso, clicar em "Carregar"
+  //    rápido demais ao abrir a página cai direto no fluxo sem token e mostra o aviso de
+  //    login mesmo com a conta aparecendo como conectada. ─────────────────────────────────
+  if (isGoogle && gUser && !gTokenClient) {
+    showProgress(true);
+    setProgress(5, 'Preparando autenticação Google…');
+    let waited = 0;
+    while (!gTokenClient && waited < 5000) {
+      await new Promise(r => setTimeout(r, 200));
+      waited += 200;
+    }
+    if (!gTokenClient) {
+      showProgress(false);
+      showError('Não foi possível inicializar o login do Google. Recarregue a página e tente novamente.');
+      return;
+    }
+  }
+
   // ── Se é link do Google, usuário parece conectado mas token expirou:
   //    renovar silenciosamente ANTES de tentar carregar ───────────────
   if (isGoogle && !gToken && gUser && gTokenClient) {

@@ -910,6 +910,44 @@ tailwind.config = {
         </div>
       </div>
 
+      <!-- Histórico + Projeção (movido da aba Projeção) -->
+      <div class="card card-glow p-4 mb-4">
+        <div class="flex items-center justify-between mb-1 flex-wrap gap-2">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="text-sm font-semibold" style="color:#e2e4f0;">Histórico + Projeção</div>
+            <div class="help-btn" tabindex="0" onclick="this.classList.toggle('active')">?
+              <div class="help-popup">
+                <div class="help-popup-title">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4d7aff" stroke-width="2"><path d="M2 20 L8 14 L13 17 L20 8"/><path d="M20 8 L22 14 M20 8 L14 9" stroke-dasharray="3 2"/></svg>
+                  Histórico + Projeção
+                </div>
+                <p>Combina <strong>três camadas de informação</strong> em um único gráfico, dividido pela linha pontilhada vertical:</p>
+                <div class="tip-row"><div class="tip-dot" style="background:#4d7aff;"></div><div><strong>Linha azul</strong> — valores reais históricos. O que de fato aconteceu.</div></div>
+                <div class="tip-row"><div class="tip-dot" style="background:#34d399;"></div><div><strong>Linha verde tracejada</strong> — projeção por <em>Regressão Linear</em>: calcula a tendência de longo prazo e projeta sua continuação.</div></div>
+                <div class="tip-row"><div class="tip-dot" style="background:#fbbf24;"></div><div><strong>Linha amarela pontilhada</strong> — projeção por <em>Média Móvel Ponderada</em>: dá mais peso aos períodos recentes, capturando mudanças de ritmo.</div></div>
+                <div class="tip-row"><div class="tip-dot" style="background:rgba(52,211,153,0.4);width:14px;height:10px;border-radius:3px;"></div><div><strong>Faixa verde</strong> — intervalo de confiança de 90%: o valor real provavelmente ficará dentro dessa faixa. Ela se alarga no tempo porque a incerteza cresce.</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-3 text-xs" style="color:#8b90b8;">
+            <span style="display:inline-flex;align-items:center;gap:5px;">
+              <span style="display:inline-block;width:18px;height:2px;background:#4d7aff;border-radius:2px;"></span> Histórico
+            </span>
+            <span style="display:inline-flex;align-items:center;gap:5px;">
+              <span style="display:inline-block;width:18px;height:2px;background:#34d399;border-radius:2px;border-style:dashed;"></span> Regressão Linear
+            </span>
+            <span style="display:inline-flex;align-items:center;gap:5px;">
+              <span style="display:inline-block;width:18px;height:2px;background:#fbbf24;border-radius:2px;border-style:dotted;"></span> Média Móvel
+            </span>
+            <span style="display:inline-flex;align-items:center;gap:5px;">
+              <span style="display:inline-block;width:18px;height:8px;border-radius:2px;background:rgba(52,211,153,0.15);"></span> Intervalo 90%
+            </span>
+          </div>
+        </div>
+        <div style="font-size:11px;color:#4a4f6e;margin-bottom:12px;" id="fc-model-info"></div>
+        <div class="chart-wrap-lg" style="height:360px;"><canvas id="forecastChart"></canvas></div>
+      </div>
+
     </section>
 
     <section id="section-table" class="hidden fade-in">
@@ -972,44 +1010,6 @@ tailwind.config = {
 
       <!-- Insight KPIs -->
       <div id="fc-kpis" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6"></div>
-
-      <!-- Main forecast chart -->
-      <div class="card card-glow p-4 mb-4">
-        <div class="flex items-center justify-between mb-1 flex-wrap gap-2">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <div class="text-sm font-semibold" style="color:#e2e4f0;">Histórico + Projeção</div>
-            <div class="help-btn" tabindex="0" onclick="this.classList.toggle('active')">?
-              <div class="help-popup">
-                <div class="help-popup-title">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4d7aff" stroke-width="2"><path d="M2 20 L8 14 L13 17 L20 8"/><path d="M20 8 L22 14 M20 8 L14 9" stroke-dasharray="3 2"/></svg>
-                  Histórico + Projeção
-                </div>
-                <p>Combina <strong>três camadas de informação</strong> em um único gráfico, dividido pela linha pontilhada vertical:</p>
-                <div class="tip-row"><div class="tip-dot" style="background:#4d7aff;"></div><div><strong>Linha azul</strong> — valores reais históricos. O que de fato aconteceu.</div></div>
-                <div class="tip-row"><div class="tip-dot" style="background:#34d399;"></div><div><strong>Linha verde tracejada</strong> — projeção por <em>Regressão Linear</em>: calcula a tendência de longo prazo e projeta sua continuação.</div></div>
-                <div class="tip-row"><div class="tip-dot" style="background:#fbbf24;"></div><div><strong>Linha amarela pontilhada</strong> — projeção por <em>Média Móvel Ponderada</em>: dá mais peso aos períodos recentes, capturando mudanças de ritmo.</div></div>
-                <div class="tip-row"><div class="tip-dot" style="background:rgba(52,211,153,0.4);width:14px;height:10px;border-radius:3px;"></div><div><strong>Faixa verde</strong> — intervalo de confiança de 90%: o valor real provavelmente ficará dentro dessa faixa. Ela se alarga no tempo porque a incerteza cresce.</div></div>
-              </div>
-            </div>
-          </div>
-          <div class="flex gap-3 text-xs" style="color:#8b90b8;">
-            <span style="display:inline-flex;align-items:center;gap:5px;">
-              <span style="display:inline-block;width:18px;height:2px;background:#4d7aff;border-radius:2px;"></span> Histórico
-            </span>
-            <span style="display:inline-flex;align-items:center;gap:5px;">
-              <span style="display:inline-block;width:18px;height:2px;background:#34d399;border-radius:2px;border-style:dashed;"></span> Regressão Linear
-            </span>
-            <span style="display:inline-flex;align-items:center;gap:5px;">
-              <span style="display:inline-block;width:18px;height:2px;background:#fbbf24;border-radius:2px;border-style:dotted;"></span> Média Móvel
-            </span>
-            <span style="display:inline-flex;align-items:center;gap:5px;">
-              <span style="display:inline-block;width:18px;height:8px;border-radius:2px;background:rgba(52,211,153,0.15);"></span> Intervalo 90%
-            </span>
-          </div>
-        </div>
-        <div style="font-size:11px;color:#4a4f6e;margin-bottom:12px;" id="fc-model-info"></div>
-        <div class="chart-wrap-lg" style="height:360px;"><canvas id="forecastChart"></canvas></div>
-      </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <!-- Residuals chart -->

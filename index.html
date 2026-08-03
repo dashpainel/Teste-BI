@@ -472,10 +472,6 @@ tailwind.config = {
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
     Tabela de Dados
   </div>
-  <div onclick="showSection('forecast')" class="nav-link mx-2" id="nav-forecast">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20 L7 14 L12 16 L17 8 L22 4"/><path d="M17 8 L22 4 L22 9" fill="currentColor" stroke="currentColor" stroke-width="1.5"/></svg>
-    Projeção
-  </div>
 
   <div class="flex-1"></div>
 
@@ -983,109 +979,6 @@ tailwind.config = {
       </div>
     </section>
 
-    <!-- ════ RANKING SECTION ════ -->
-    <section id="section-forecast" class="hidden fade-in">
-
-      <!-- Title + controls -->
-      <div class="flex flex-wrap items-center gap-3 mb-6">
-        <div>
-          <h2 class="text-base font-bold" style="color:#e2e4f0;">Projeção de Tendência</h2>
-          <p style="font-size:12px;color:#8b90b8;margin-top:2px;">Regressão linear + média móvel — projeção dos próximos períodos</p>
-        </div>
-        <div class="flex-1"></div>
-        <select id="fc-date-col"   class="input" style="width:auto;font-size:12px;padding:6px 10px;" onchange="buildForecast()"></select>
-        <select id="fc-metric-col" class="input" style="width:auto;font-size:12px;padding:6px 10px;" onchange="buildForecast()"></select>
-        <select id="fc-period"     class="input" style="width:auto;font-size:12px;padding:6px 10px;" onchange="buildForecast()">
-          <option value="month">Por Mês</option>
-          <option value="quarter">Por Trimestre</option>
-          <option value="year">Por Ano</option>
-        </select>
-        <select id="fc-horizon"    class="input" style="width:auto;font-size:12px;padding:6px 10px;" onchange="buildForecast()">
-          <option value="3">Projetar 3 períodos</option>
-          <option value="6" selected>Projetar 6 períodos</option>
-          <option value="12">Projetar 12 períodos</option>
-          <option value="24">Projetar 24 períodos</option>
-        </select>
-      </div>
-
-      <!-- Insight KPIs -->
-      <div id="fc-kpis" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6"></div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <!-- Residuals chart -->
-        <div class="card p-4">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-            <div class="text-sm font-semibold" style="color:#e2e4f0;">Resíduos do Modelo</div>
-            <div class="help-btn" tabindex="0" onclick="this.classList.toggle('active')">?
-              <div class="help-popup">
-                <div class="help-popup-title">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4d7aff" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12" stroke-dasharray="3 2"/><line x1="6" y1="8" x2="6" y2="16"/><line x1="12" y1="6" x2="12" y2="18"/><line x1="18" y1="9" x2="18" y2="15"/></svg>
-                  Resíduos do Modelo
-                </div>
-                <p>Mostra a <strong>diferença entre o valor real e o valor previsto pela regressão linear</strong> em cada período histórico.</p>
-                <div class="tip-row"><div class="tip-dot" style="background:#34d399;"></div><div><em>Barra verde (acima de zero)</em> — o valor real foi <strong>maior</strong> do que o modelo estimou.</div></div>
-                <div class="tip-row"><div class="tip-dot" style="background:#f87171;"></div><div><em>Barra vermelha (abaixo de zero)</em> — o valor real foi <strong>menor</strong> do que o modelo estimou.</div></div>
-                <p>Barras pequenas e alternadas indicam um <strong>bom ajuste</strong>. Barras grandes ou em sequência indicam que o modelo não captura bem esse padrão — a projeção deve ser interpretada com mais cautela.</p>
-              </div>
-            </div>
-          </div>
-          <div style="font-size:11px;color:#4a4f6e;margin-bottom:10px;">Diferença entre valor real e projeção — quanto menor, melhor o ajuste</div>
-          <div class="chart-wrap"><canvas id="residualChart"></canvas></div>
-        </div>
-        <!-- Seasonal chart -->
-        <div class="card p-4">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-            <div class="text-sm font-semibold" style="color:#e2e4f0;">Padrão Sazonal</div>
-            <div class="help-btn" tabindex="0" onclick="this.classList.toggle('active')">?
-              <div class="help-popup left">
-                <div class="help-popup-title">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4d7aff" stroke-width="2"><path d="M2 12 Q6 4 12 12 Q18 20 22 12"/></svg>
-                  Padrão Sazonal
-                </div>
-                <p>Calcula um <strong>índice de sazonalidade</strong> para cada sub-período (mês ou trimestre), revelando ciclos que se repetem ao longo dos anos.</p>
-                <div class="tip-row"><div class="tip-dot" style="background:#4d7aff;"></div><div><strong>Índice = 1,0</strong> — esse período está exatamente na média geral.</div></div>
-                <div class="tip-row"><div class="tip-dot" style="background:#34d399;"></div><div><strong>Índice &gt; 1,0</strong> — esse mês/trimestre costuma ficar <em>acima</em> da média (ex.: 1,3 = 30% acima).</div></div>
-                <div class="tip-row"><div class="tip-dot" style="background:#a78bfa;"></div><div><strong>Índice &lt; 1,0</strong> — esse mês/trimestre costuma ficar <em>abaixo</em> da média (ex.: 0,7 = 30% abaixo).</div></div>
-                <p style="margin-top:8px;color:#8b90b8;">Esse índice é aplicado automaticamente nas projeções futuras para torná-las mais realistas.</p>
-              </div>
-            </div>
-          </div>
-          <div style="font-size:11px;color:#4a4f6e;margin-bottom:10px;">Índice médio por sub-período — detecta ciclos recorrentes</div>
-          <div class="chart-wrap"><canvas id="seasonalChart"></canvas></div>
-        </div>
-      </div>
-
-      <!-- Forecast table -->
-      <div class="card overflow-hidden">
-        <div class="px-4 pt-4 pb-2">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-            <div class="text-sm font-semibold" style="color:#e2e4f0;">Tabela de Projeções</div>
-            <div class="help-btn" tabindex="0" onclick="this.classList.toggle('active')">?
-              <div class="help-popup">
-                <div class="help-popup-title">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4d7aff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
-                  Tabela de Projeções
-                </div>
-                <p>Exibe os <strong>valores numéricos exatos</strong> das projeções, complementando o gráfico com precisão para planejamento e relatórios.</p>
-                <div class="tip-row"><div class="tip-dot" style="background:#8b90b8;"></div><div><strong>Últimas 5 linhas históricas</strong> — contexto dos períodos reais mais recentes.</div></div>
-                <div class="tip-row"><div class="tip-dot" style="background:#34d399;"></div><div><strong>Linhas verdes</strong> — períodos futuros projetados. Mostram os dois modelos lado a lado.</div></div>
-                <div class="tip-row"><div class="tip-dot" style="background:#a78bfa;"></div><div><strong>Limite Inferior / Superior</strong> — faixa de 90% de confiança: há 90% de chance do valor real cair entre esses dois limites.</div></div>
-                <div class="tip-row"><div class="tip-dot" style="background:#fbbf24;"></div><div><strong>Var. vs Último Real</strong> — variação percentual da projeção em relação ao último período com dados reais.</div></div>
-              </div>
-            </div>
-          </div>
-          <div style="font-size:11px;color:#4a4f6e;">Valores projetados com intervalo de confiança de 90%</div>
-        </div>
-        <div class="overflow-auto">
-          <table class="data-table">
-            <thead id="fc-table-head"></thead>
-            <tbody id="fc-table-body"></tbody>
-          </table>
-        </div>
-      </div>
-
-    </section>
-
   </main>
 </div>
 
@@ -1226,7 +1119,7 @@ function chartDefaults() {
 }
 
 // ─── NAVIGATION ───────────────────────────────────────────────────────
-const sections = ['upload','dashboard','table','forecast'];
+const sections = ['upload','dashboard','table'];
 function showSection(name) {
   sections.forEach(s => {
     document.getElementById('section-'+s).classList.add('hidden');
@@ -1238,8 +1131,7 @@ function showSection(name) {
   document.getElementById('header-title').textContent = {
     upload:   'Importar Dados',
     dashboard:'Dashboard HSE',
-    table:    'Tabela de Dados',
-    forecast: 'Projeção de Tendência'
+    table:    'Tabela de Dados'
   }[name];
   closeSidebar();
 }
@@ -2632,77 +2524,81 @@ function buildForecast() {
     }
   });
 
-  // ── 10. Residuals chart ────────────────────────────────
-  destroyChart('residual');
-  const rCtx = document.getElementById('residualChart').getContext('2d');
-  const rd = chartDefaults();
-  rd.plugins.legend.display = false;
-  state.charts.residual = new Chart(rCtx, {
-    type: 'bar',
-    data: {
-      labels: histKeys,
-      datasets: [{
-        label: 'Resíduo',
-        data: residuals,
-        backgroundColor: residuals.map(v => v >= 0 ? 'rgba(52,211,153,0.7)' : 'rgba(248,113,113,0.7)'),
-        borderRadius: 3,
-      }]
-    },
-    options: {
-      ...rd,
-      plugins: { ...rd.plugins, annotation: {} },
-      scales: {
-        ...rd.scales,
-        x: { ...rd.scales.x, ticks: { ...rd.scales.x.ticks, maxTicksLimit: 10 } },
-        y: {
-          ...rd.scales.y,
-          title: { display: true, text: 'Resíduo', color: '#8b90b8', font: { size: 10 } }
-        }
-      }
-    }
-  });
-
-  // ── 11. Seasonal chart ─────────────────────────────────
-  destroyChart('seasonal');
-  const sCtx = document.getElementById('seasonalChart').getContext('2d');
-  if (seasonal) {
-    const subLabels = Object.keys(seasonal).sort();
-    const subVals   = subLabels.map(k => seasonal[k]);
-    const sd2 = chartDefaults();
-    sd2.plugins.legend.display = false;
-    state.charts.seasonal = new Chart(sCtx, {
+  // ── 10. Residuals chart (só roda se a aba Projeção ainda existir) ──
+  if (document.getElementById('residualChart')) {
+    destroyChart('residual');
+    const rCtx = document.getElementById('residualChart').getContext('2d');
+    const rd = chartDefaults();
+    rd.plugins.legend.display = false;
+    state.charts.residual = new Chart(rCtx, {
       type: 'bar',
       data: {
-        labels: subLabels.map(s => period==='month' ? ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][parseInt(s)-1] || s : s),
+        labels: histKeys,
         datasets: [{
-          label: 'Índice Sazonal',
-          data: subVals,
-          backgroundColor: subVals.map(v => v >= 1 ? 'rgba(77,122,255,0.75)' : 'rgba(167,139,250,0.6)'),
-          borderRadius: 4,
+          label: 'Resíduo',
+          data: residuals,
+          backgroundColor: residuals.map(v => v >= 0 ? 'rgba(52,211,153,0.7)' : 'rgba(248,113,113,0.7)'),
+          borderRadius: 3,
         }]
       },
       options: {
-        ...sd2,
+        ...rd,
+        plugins: { ...rd.plugins, annotation: {} },
         scales: {
-          ...sd2.scales,
+          ...rd.scales,
+          x: { ...rd.scales.x, ticks: { ...rd.scales.x.ticks, maxTicksLimit: 10 } },
           y: {
-            ...sd2.scales.y,
-            title: { display: true, text: 'Índice (1 = média)', color: '#8b90b8', font: { size: 10 } }
-          }
-        },
-        plugins: {
-          ...sd2.plugins,
-          tooltip: {
-            ...sd2.plugins.tooltip,
-            callbacks: {
-              label: ctx => ` Índice: ${ctx.raw.toFixed(3)} (${ctx.raw>=1?'+':''}${((ctx.raw-1)*100).toFixed(1)}% vs média)`
-            }
+            ...rd.scales.y,
+            title: { display: true, text: 'Resíduo', color: '#8b90b8', font: { size: 10 } }
           }
         }
       }
     });
-  } else {
-    sCtx.canvas.parentElement.innerHTML = '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#4a4f6e;font-size:13px;">Dados anuais — sem sub-período para análise sazonal</div>';
+  }
+
+  // ── 11. Seasonal chart (só roda se a aba Projeção ainda existir) ──
+  if (document.getElementById('seasonalChart')) {
+    destroyChart('seasonal');
+    const sCtx = document.getElementById('seasonalChart').getContext('2d');
+    if (seasonal) {
+      const subLabels = Object.keys(seasonal).sort();
+      const subVals   = subLabels.map(k => seasonal[k]);
+      const sd2 = chartDefaults();
+      sd2.plugins.legend.display = false;
+      state.charts.seasonal = new Chart(sCtx, {
+        type: 'bar',
+        data: {
+          labels: subLabels.map(s => period==='month' ? ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][parseInt(s)-1] || s : s),
+          datasets: [{
+            label: 'Índice Sazonal',
+            data: subVals,
+            backgroundColor: subVals.map(v => v >= 1 ? 'rgba(77,122,255,0.75)' : 'rgba(167,139,250,0.6)'),
+            borderRadius: 4,
+          }]
+        },
+        options: {
+          ...sd2,
+          scales: {
+            ...sd2.scales,
+            y: {
+              ...sd2.scales.y,
+              title: { display: true, text: 'Índice (1 = média)', color: '#8b90b8', font: { size: 10 } }
+            }
+          },
+          plugins: {
+            ...sd2.plugins,
+            tooltip: {
+              ...sd2.plugins.tooltip,
+              callbacks: {
+                label: ctx => ` Índice: ${ctx.raw.toFixed(3)} (${ctx.raw>=1?'+':''}${((ctx.raw-1)*100).toFixed(1)}% vs média)`
+              }
+            }
+          }
+        }
+      });
+    } else {
+      sCtx.canvas.parentElement.innerHTML = '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#4a4f6e;font-size:13px;">Dados anuais — sem sub-período para análise sazonal</div>';
+    }
   }
 
   // ── 12. Forecast table ────────────────────────────────

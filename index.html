@@ -2218,22 +2218,30 @@ function seasonalIndices(keys, vals, period) {
 
 // ── Main forecast function ─────────────────────────────────
 function buildForecast() {
-  const dateCol   = state.dateCols[0] || state.catCols[0];
-  const metricCol = state.numCols[0];
+  // Mesma prioridade de coluna de data usada em "Tendência 3 Meses" e "Dias Sem Acidente":
+  // prioriza a coluna de DATA DO ACIDENTE, em vez de pegar a 1ª coluna de data que aparecer
+  // (que podia ser "Data de Cadastro"/"Data de Revisão" etc., deixando meses sem acidente de fora).
+  const dateCol   = state.dateCols.find(c => /acident|ocorr/i.test(c) && /data|date/i.test(c))
+                  || state.dateCols.find(c => /acident|ocorr/i.test(c))
+                  || state.dateCols.find(c => /data|date/i.test(c))
+                  || state.dateCols[0]
+                  || state.catCols[0];
   const period    = 'month';
   const horizon   = 3;
 
   const source = (state.filtered && state.filtered.length) ? state.filtered : state.raw;
-  if (!dateCol || !metricCol || !source.length) return;
+  if (!dateCol || !source.length) return;
 
   // ── 1. Aggregate historical data by period ─────────────
+  // Conta quantos acidentes (linhas) ocorreram em cada mês — não soma uma coluna numérica
+  // arbitrária, para bater com "quantos acidentes deu naquele mês".
   const grouped = {};
   source.forEach(r => {
     const v = r[dateCol];
     const key = periodKey(v instanceof Date ? v : new Date(v), period);
     if (!key) return;
     if (!grouped[key]) grouped[key] = { sum: 0, count: 0 };
-    grouped[key].sum += getNum(r, metricCol);
+    grouped[key].sum += 1;
     grouped[key].count++;
   });
 

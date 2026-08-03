@@ -1156,7 +1156,7 @@ function handleFile(file) {
       const wb = XLSX.read(data, { type: 'array', cellDates: true });
       setProgress(60, 'Parseando dados…');
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '', raw: true });
       setProgress(80, 'Analisando estrutura…');
       processData(rows);
       setProgress(100, 'Pronto!');
@@ -2816,12 +2816,12 @@ function parseBuffer(buf) {
   try {
     const wb = XLSX.read(new Uint8Array(buf), { type: 'array', cellDates: true });
     const ws = wb.Sheets[wb.SheetNames[0]];
-    return XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
+    return XLSX.utils.sheet_to_json(ws, { defval: '', raw: true });
   } catch {
     const text = new TextDecoder('utf-8').decode(buf);
     const wb = XLSX.read(text, { type: 'string', cellDates: true });
     const ws = wb.Sheets[wb.SheetNames[0]];
-    return XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
+    return XLSX.utils.sheet_to_json(ws, { defval: '', raw: true });
   }
 }
 

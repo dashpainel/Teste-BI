@@ -3911,11 +3911,16 @@ async function runFullAIAnalysis() {
   if (!summary) return;
 
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    // ── Chama a Anthropic através do proxy (Cloudflare Worker) ──
+    // A chave de API fica guardada em segredo no Worker, nunca aqui no HTML público.
+    // Troque a URL abaixo pela URL do seu Worker depois de publicá-lo.
+    const AI_PROXY_URL = 'https://painel-hse-ai-proxy.giroldo.workers.dev/';
+
+    const resp = await fetch(AI_PROXY_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-5',
         max_tokens: 1800,
         system: `Você é um especialista sênior em HSE (Saúde, Segurança e Meio Ambiente) com 20 anos de experiência em análise de dados de acidentes de trabalho e prevenção de riscos ocupacionais.
 
@@ -4078,8 +4083,16 @@ function generateAIRecommendations() { runFullAIAnalysis(); }
 function generateAIInsightsAuto() {
   // Gráfico de tendência é estatístico e não depende de IA — já renderiza na hora
   buildTrendForecastChart();
-  // Roda a análise de IA (insights + recomendações) em segundo plano
-  setTimeout(() => runFullAIAnalysis(), 1500);
+  // A análise de IA (insights + recomendações) NÃO roda mais automaticamente —
+  // cada chamada consome créditos da API, então só dispara quando o usuário
+  // clica no botão "Analisar" (ver btn-insights / runFullAIAnalysis()).
+  const insEl  = document.getElementById('ai-insights-content');
+  const recsEl = document.getElementById('ai-recs-content');
+  const cta = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:18px 10px;text-align:center;">
+    <div style="font-size:11px;color:#8b90b8;line-height:1.5;">Clique em <strong style="color:#c8cbdf;">"Analisar"</strong> acima para gerar insights e recomendações com base nos dados atuais.</div>
+  </div>`;
+  if (insEl)  insEl.innerHTML  = cta;
+  if (recsEl) recsEl.innerHTML = cta;
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────

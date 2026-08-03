@@ -901,7 +901,7 @@ tailwind.config = {
                 <p>Cada barra mostra o valor <strong>real</strong> (histórico) ou <strong>estimado</strong> (projeção) por período.</p>
                 <div class="tip-row"><div class="tip-dot" style="background:#4d7aff;"></div><div><strong>Barras azuis</strong> — valores reais já registrados.</div></div>
                 <div class="tip-row"><div class="tip-dot" style="background:#34d399;"></div><div><strong>Barras verdes</strong> — projeção por Regressão Linear, com base na tendência histórica.</div></div>
-                <p>Respeita os filtros aplicados no topo do painel (período, regional, unidade, setor, gênero).</p>
+                <p>Sempre mostra o histórico completo de acidentes (não é afetado pelos filtros do topo do painel), para manter a tendência e a projeção consistentes.</p>
               </div>
             </div>
           </div>
@@ -2229,7 +2229,10 @@ function buildForecast() {
   const period    = 'month';
   const horizon   = 3;
 
-  const source = (state.filtered && state.filtered.length) ? state.filtered : state.raw;
+  // Este gráfico é o histórico + tendência "oficial": deve sempre refletir TODO o histórico
+  // de acidentes, sem aplicar os filtros do topo (período, regional, unidade, setor, gênero),
+  // para não divergir da projeção. Por isso usa sempre state.raw, nunca state.filtered.
+  const source = state.raw;
   if (!dateCol || !source.length) return;
 
   // ── 1. Aggregate historical data by period ─────────────

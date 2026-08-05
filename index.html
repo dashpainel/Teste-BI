@@ -293,7 +293,23 @@ tailwind.config = {
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
   /* Sidebar */
-  #sidebar { transition: transform 0.3s ease; }
+  #sidebar { transition: transform 0.3s ease, width 0.25s ease, min-width 0.25s ease, opacity 0.2s ease; }
+  #sidebar.collapsed { width: 0 !important; min-width: 0 !important; border-right: none !important; opacity: 0; overflow: hidden; }
+
+  /* Sidebar collapse/expand toggle (desktop) */
+  #sidebar-toggle {
+    position: fixed; top: 18px; left: 214px;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #fff; border: 1px solid #e4e6f0; box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    z-index: 60; transition: left 0.25s ease, background 0.2s, border-color 0.2s;
+    color: #4b5563;
+  }
+  #sidebar-toggle:hover { color: #2952f5; border-color: #2952f5; }
+  #sidebar-toggle.collapsed { left: 10px; }
+  html.light #sidebar-toggle { background: #fff; border-color: #e4e6f0; }
+  html:not(.light) #sidebar-toggle { background: #131629; border-color: #2c3155; color: #8b90b8; }
+  @media (max-width: 768px) { #sidebar-toggle { display: none; } }
 
   /* Mobile overlay */
   #overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 40; }
@@ -496,6 +512,11 @@ tailwind.config = {
     </button>
   </div>
 </div>
+
+<!-- Botão para esconder/mostrar a barra lateral -->
+<button id="sidebar-toggle" onclick="toggleSidebarCollapse()" title="Mostrar/ocultar menu">
+  <svg id="sidebar-toggle-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition:transform 0.25s ease;"><polyline points="15 18 9 12 15 6"/></svg>
+</button>
 
 <!-- ═══════════════════════════ MAIN ═══════════════════════════ -->
 <div id="main-wrap" style="flex:1;min-width:0;display:flex;flex-direction:column;height:100vh;overflow-y:auto;">
@@ -1113,6 +1134,30 @@ function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('overlay').classList.remove('show');
 }
+
+// ─── SIDEBAR COLLAPSE (DESKTOP) ─────────────────────────────────────
+// Deixa o usuário esconder/mostrar a barra lateral pra ganhar espaço
+// pros indicadores. Preferência salva no navegador (localStorage).
+const LS_SIDEBAR_COLLAPSED = 'dashboards_sidebar_collapsed';
+function toggleSidebarCollapse() {
+  const collapsed = document.getElementById('sidebar').classList.toggle('collapsed');
+  document.getElementById('sidebar-toggle').classList.toggle('collapsed', collapsed);
+  document.getElementById('sidebar-toggle-icon').style.transform = collapsed ? 'rotate(180deg)' : 'rotate(0deg)';
+  try { localStorage.setItem(LS_SIDEBAR_COLLAPSED, collapsed ? '1' : '0'); } catch(e) {}
+}
+function initSidebarCollapseState() {
+  let collapsed = false;
+  try { collapsed = localStorage.getItem(LS_SIDEBAR_COLLAPSED) === '1'; } catch(e) {}
+  if (collapsed) {
+    document.getElementById('sidebar').classList.add('collapsed');
+    document.getElementById('sidebar-toggle').classList.add('collapsed');
+    document.getElementById('sidebar-toggle-icon').style.transform = 'rotate(180deg)';
+  }
+}
+document.addEventListener('DOMContentLoaded', initSidebarCollapseState);
+// A tag <script> já está depois da sidebar no HTML, então os elementos já existem
+// neste ponto — chama direto também, sem depender só do evento DOMContentLoaded.
+initSidebarCollapseState();
 
 // ─── THEME ────────────────────────────────────────────────────────
 function toggleTheme() {

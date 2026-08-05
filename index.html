@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-BR" class="light">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -729,14 +729,14 @@ tailwind.config = {
       <!-- ══ HEADER BAR ══ -->
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:#0d0f1c;border:1px solid #1a1e35;border-radius:12px;">
         <div style="flex:1;min-width:0;">
-          <div style="font-size:18px;font-weight:900;color:#e2e4f0;letter-spacing:-0.02em;">VISÃO GERAL</div>
-          <div style="font-size:11px;color:#8b90b8;margin-top:1px;">Panorama estratégico de Saúde, Segurança e Meio Ambiente</div>
+          <div style="font-size:18px;font-weight:900;color:#111827;letter-spacing:-0.02em;">VISÃO GERAL</div>
+          <div style="font-size:13px;color:#4b5563;margin-top:1px;">Panorama estratégico de Saúde, Segurança e Meio Ambiente</div>
         </div>
         <!-- Period filter -->
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
           <div style="display:flex;flex-direction:column;gap:2px;">
-            <span style="font-size:9px;color:#4a4f6e;text-transform:uppercase;letter-spacing:0.06em;">Período</span>
-            <select id="period-filter" class="input" style="width:auto;font-size:11px;padding:4px 8px;" onchange="applyPeriodFilter()">
+            <span style="font-size:13px;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em;">Período</span>
+            <select id="period-filter" class="input" style="width:auto;font-size:13px;padding:4px 8px;" onchange="applyPeriodFilter()">
               <option value="all">Todos os registros</option>
               <option value="week">Esta semana</option>
               <option value="month">Este mês</option>
@@ -751,15 +751,15 @@ tailwind.config = {
           </div>
           <!-- Quick cat filters -->
           <div id="hse-quick-filters" style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;"></div>
-          <button onclick="clearAllFilters()" class="btn btn-ghost" style="font-size:11px;padding:5px 10px;align-self:flex-end;">✕ Limpar</button>
+          <button onclick="clearAllFilters()" class="btn btn-ghost" style="font-size:13px;padding:5px 10px;align-self:flex-end;">✕ Limpar</button>
         </div>
         <!-- Last update + IA button -->
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-          <div style="font-size:9px;color:#4a4f6e;text-align:right;">
+          <div style="font-size:13px;color:#6b7280;text-align:right;">
             Última atualização<br>
-            <span id="last-update-label" style="color:#8b90b8;font-size:10px;">—</span>
+            <span id="last-update-label" style="color:#4b5563;font-size:12px;">—</span>
           </div>
-          <button onclick="runFullAIAnalysis()" id="btn-insights" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;gap:5px;">
+          <button onclick="runFullAIAnalysis()" id="btn-insights" class="btn btn-secondary" style="font-size:13px;padding:5px 10px;gap:5px;">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
             Analisar IA
           </button>
@@ -774,32 +774,32 @@ tailwind.config = {
 
         <!-- Acidentes por Regional -->
         <div class="card p-3">
-          <div style="font-size:11px;font-weight:700;color:#e2e4f0;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Acidentes por Regional</div>
+          <div style="font-size:13px;font-weight:700;color:#111827;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Acidentes por Regional</div>
           <div style="position:relative;height:140px;"><canvas id="regionalChart"></canvas>
             <div id="regional-center" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
-              <div style="font-size:20px;font-weight:900;color:#e2e4f0;" id="regional-total">—</div>
-              <div style="font-size:9px;color:#8b90b8;">Total</div>
+              <div style="font-size:20px;font-weight:900;color:#111827;" id="regional-total">—</div>
+              <div style="font-size:13px;color:#4b5563;">Total</div>
             </div>
           </div>
-          <div id="regional-legend" style="margin-top:6px;font-size:9px;line-height:1.6;max-height:70px;overflow-y:auto;"></div>
+          <div id="regional-legend" style="margin-top:6px;font-size:13px;line-height:1.6;max-height:70px;overflow-y:auto;"></div>
         </div>
 
         <!-- Acidentes por Setor -->
         <div class="card p-3">
-          <div style="font-size:11px;font-weight:700;color:#e2e4f0;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Acidentes por Setor</div>
+          <div style="font-size:13px;font-weight:700;color:#111827;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Acidentes por Setor</div>
           <div style="height:210px;"><canvas id="setorChart"></canvas></div>
         </div>
 
         <!-- Distribuição por Turno -->
         <div class="card p-3">
-          <div style="font-size:11px;font-weight:700;color:#e2e4f0;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Distribuição por Turno</div>
+          <div style="font-size:13px;font-weight:700;color:#111827;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Distribuição por Turno</div>
           <div style="position:relative;height:140px;"><canvas id="turnoChart"></canvas>
             <div id="turno-center" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
-              <div style="font-size:18px;font-weight:900;color:#e2e4f0;" id="turno-total">—</div>
-              <div style="font-size:9px;color:#8b90b8;">Total</div>
+              <div style="font-size:18px;font-weight:900;color:#111827;" id="turno-total">—</div>
+              <div style="font-size:13px;color:#4b5563;">Total</div>
             </div>
           </div>
-          <div id="turno-legend" style="margin-top:6px;font-size:9px;line-height:1.6;max-height:70px;overflow-y:auto;"></div>
+          <div id="turno-legend" style="margin-top:6px;font-size:13px;line-height:1.6;max-height:70px;overflow-y:auto;"></div>
         </div>
       </div>
 
@@ -809,10 +809,10 @@ tailwind.config = {
         <!-- Tipo de Acidente -->
         <div class="card p-3">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-            <div style="font-size:11px;font-weight:700;color:#e2e4f0;text-transform:uppercase;letter-spacing:0.04em;">Tipo de Acidente</div>
+            <div style="font-size:13px;font-weight:700;color:#111827;text-transform:uppercase;letter-spacing:0.04em;">Tipo de Acidente</div>
             <div style="display:flex;gap:3px;">
-              <button class="chart-type-btn active" style="font-size:9px;padding:2px 6px;" onclick="toggleChartType('tipoChart','tipo-btns',this,'bar')">Barra</button>
-              <button class="chart-type-btn" style="font-size:9px;padding:2px 6px;" onclick="toggleChartType('tipoChart','tipo-btns',this,'doughnut')">Pizza</button>
+              <button class="chart-type-btn active" style="font-size:12px;padding:3px 8px;" onclick="toggleChartType('tipoChart','tipo-btns',this,'bar')">Barra</button>
+              <button class="chart-type-btn" style="font-size:12px;padding:3px 8px;" onclick="toggleChartType('tipoChart','tipo-btns',this,'doughnut')">Pizza</button>
             </div>
           </div>
           <div id="tipo-btns" data-col="Tipo de Acidente" data-current="bar"></div>
@@ -821,18 +821,18 @@ tailwind.config = {
 
         <!-- Parte do Corpo Atingida -->
         <div class="card p-3">
-          <div style="font-size:11px;font-weight:700;color:#e2e4f0;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">Parte do Corpo Atingida</div>
+          <div style="font-size:13px;font-weight:700;color:#111827;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">Parte do Corpo Atingida</div>
           <div id="body-map-container" style="display:flex;gap:8px;height:220px;">
             <div id="body-svg-wrap" style="flex-shrink:0;display:flex;align-items:center;justify-content:center;"></div>
-            <div id="body-legend" style="flex:1;font-size:9px;overflow-y:auto;"></div>
+            <div id="body-legend" style="flex:1;font-size:13px;overflow-y:auto;"></div>
           </div>
-          <div style="font-size:9px;color:#4a4f6e;margin-top:4px;" id="body-col-label"></div>
+          <div style="font-size:13px;color:#6b7280;margin-top:4px;" id="body-col-label"></div>
         </div>
 
         <!-- Abertura de CAT -->
         <div class="card p-3">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-            <div style="font-size:11px;font-weight:700;color:#e2e4f0;text-transform:uppercase;letter-spacing:0.04em;">Abertura de CAT</div>
+            <div style="font-size:13px;font-weight:700;color:#111827;text-transform:uppercase;letter-spacing:0.04em;">Abertura de CAT</div>
           </div>
           <div style="height:210px;"><canvas id="catChart"></canvas></div>
         </div>
@@ -840,10 +840,10 @@ tailwind.config = {
         <!-- Gravidade -->
         <div class="card p-3">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-            <div style="font-size:11px;font-weight:700;color:#e2e4f0;text-transform:uppercase;letter-spacing:0.04em;">Gravidade</div>
+            <div style="font-size:13px;font-weight:700;color:#111827;text-transform:uppercase;letter-spacing:0.04em;">Gravidade</div>
             <div style="display:flex;gap:3px;">
-              <button class="chart-type-btn active" style="font-size:9px;padding:2px 6px;" onclick="toggleChartType('gravidadeChart','gravidade-btns',this,'bar')">Barra</button>
-              <button class="chart-type-btn" style="font-size:9px;padding:2px 6px;" onclick="toggleChartType('gravidadeChart','gravidade-btns',this,'doughnut')">Pizza</button>
+              <button class="chart-type-btn active" style="font-size:12px;padding:3px 8px;" onclick="toggleChartType('gravidadeChart','gravidade-btns',this,'bar')">Barra</button>
+              <button class="chart-type-btn" style="font-size:12px;padding:3px 8px;" onclick="toggleChartType('gravidadeChart','gravidade-btns',this,'doughnut')">Pizza</button>
             </div>
           </div>
           <div id="gravidade-btns" data-col="Gravidade" data-current="bar"></div>
@@ -860,16 +860,16 @@ tailwind.config = {
             <div style="width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,#2952f5,#a78bfa);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
             </div>
-            <div style="font-size:11px;font-weight:700;color:#e2e4f0;text-transform:uppercase;letter-spacing:0.04em;">Insights Inteligentes (IA)</div>
+            <div style="font-size:13px;font-weight:700;color:#111827;text-transform:uppercase;letter-spacing:0.04em;">Insights Inteligentes (IA)</div>
           </div>
           <div id="ai-insights-content">
-            <div style="color:#4a4f6e;font-size:10px;padding:8px;">Carregue dados para gerar insights</div>
+            <div style="color:#6b7280;font-size:12px;padding:8px;">Carregue dados para gerar insights</div>
           </div>
         </div>
 
         <!-- Risco por Unidade -->
         <div class="card p-3">
-          <div style="font-size:11px;font-weight:700;color:#e2e4f0;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Acidentes por Unidade</div>
+          <div style="font-size:13px;font-weight:700;color:#111827;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Acidentes por Unidade</div>
           <div style="height:210px;"><canvas id="unidadeChart"></canvas></div>
         </div>
 
@@ -879,10 +879,10 @@ tailwind.config = {
             <div style="width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,#059669,#34d399);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             </div>
-            <div style="font-size:11px;font-weight:700;color:#e2e4f0;text-transform:uppercase;letter-spacing:0.04em;">Recomendações (IA)</div>
+            <div style="font-size:13px;font-weight:700;color:#111827;text-transform:uppercase;letter-spacing:0.04em;">Recomendações (IA)</div>
           </div>
           <div id="ai-recs-content">
-            <div style="color:#4a4f6e;font-size:10px;padding:8px;">Recomendações aparecem após análise</div>
+            <div style="color:#6b7280;font-size:12px;padding:8px;">Recomendações aparecem após análise</div>
           </div>
         </div>
       </div>
@@ -891,7 +891,7 @@ tailwind.config = {
       <div class="card card-glow p-4 mb-4">
         <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
           <div style="display:flex;align-items:center;gap:8px;">
-            <div class="text-sm font-semibold" style="color:#e2e4f0;">Histórico + Projeção</div>
+            <div class="text-sm font-semibold" style="color:#111827;">Histórico + Projeção</div>
             <div class="help-btn" tabindex="0" onclick="this.classList.toggle('active')">?
               <div class="help-popup">
                 <div class="help-popup-title">
@@ -905,7 +905,7 @@ tailwind.config = {
               </div>
             </div>
           </div>
-          <div class="flex gap-3 text-xs" style="color:#8b90b8;">
+          <div class="flex gap-3 text-xs" style="color:#4b5563;">
             <span style="display:inline-flex;align-items:center;gap:5px;">
               <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#4d7aff;"></span> Histórico
             </span>
@@ -914,7 +914,7 @@ tailwind.config = {
             </span>
           </div>
         </div>
-        <div style="font-size:11px;color:#4a4f6e;margin-bottom:12px;" id="fc-model-info"></div>
+        <div style="font-size:13px;color:#6b7280;margin-bottom:12px;" id="fc-model-info"></div>
         <div class="chart-wrap-lg" style="height:320px;"><canvas id="forecastChart"></canvas></div>
       </div>
 
@@ -989,12 +989,14 @@ const PALETTE_ALPHA = (i, a=0.8) => {
 };
 
 // ─── CHART.JS DEFAULTS ────────────────────────────────────────────────
-Chart.defaults.color = '#8b90b8';
-Chart.defaults.borderColor = '#1a1e35';
+// TESTE: tema claro + fontes maiores para melhor leitura em telas pequenas (LinkedIn)
+Chart.defaults.color = '#4b5563';
+Chart.defaults.borderColor = '#e4e6f0';
 Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
-Chart.defaults.font.size = 11;
-Chart.defaults.plugins.legend.labels.boxWidth = 10;
+Chart.defaults.font.size = 13;
+Chart.defaults.plugins.legend.labels.boxWidth = 12;
 Chart.defaults.plugins.legend.labels.padding = 16;
+Chart.defaults.plugins.legend.labels.font = { size: 13, weight: '600' };
 
 // ─── DATALABELS PLUGIN (inline chart labels) ──────────────────
 // Lightweight custom plugin — no CDN needed
@@ -1020,8 +1022,9 @@ const inlineLabelPlugin = {
 
         const label = fmtShort(raw);
         ctx.save();
-        ctx.font = 'bold 10px Inter, sans-serif';
-        ctx.fillStyle = '#e2e4f0';
+        // TESTE: fonte maior para leitura em thumbnail (LinkedIn)
+        ctx.font = 'bold 14px Inter, sans-serif';
+        ctx.fillStyle = '#1a1e35';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
@@ -1034,15 +1037,15 @@ const inlineLabelPlugin = {
             // Only draw if bar is wide enough
             if (element.width > 30) {
               ctx.textAlign = 'left';
-              ctx.fillStyle = '#e2e4f0';
-              ctx.fillText(label, element.base + 6, y);
+              ctx.fillStyle = '#fff';
+              ctx.fillText(label, element.base + 8, y);
             }
           } else {
             // Vertical bar — label above bar
             const x = element.x;
-            const y = element.y - 8;
+            const y = element.y - 10;
             if (y > chartArea.top) {
-              ctx.fillStyle = '#e2e4f0';
+              ctx.fillStyle = '#1a1e35';
               ctx.fillText(label, x, y);
             }
           }
@@ -1059,7 +1062,7 @@ const inlineLabelPlugin = {
           const y = element.y + Math.sin(angle) * r;
 
           ctx.fillStyle = '#fff';
-          ctx.font = 'bold 11px Inter, sans-serif';
+          ctx.font = 'bold 14px Inter, sans-serif';
           ctx.fillText(pct.toFixed(1)+'%', x, y);
         }
 
@@ -1076,18 +1079,19 @@ function chartDefaults() {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: '#131629',
-        borderColor: '#2c3155',
+        backgroundColor: '#fff',
+        borderColor: '#d1d5db',
         borderWidth: 1,
-        titleColor: '#e2e4f0',
-        bodyColor: '#8b90b8',
+        titleColor: '#1a1e35',
+        bodyColor: '#4b5563',
         padding: 10,
         cornerRadius: 8,
       }
     },
     scales: {
-      x: { grid: { color: '#1a1e35' }, ticks: { color: '#8b90b8', maxTicksLimit: 10 } },
-      y: { grid: { color: '#1a1e35' }, ticks: { color: '#8b90b8' } },
+      // TESTE: fonte maior nos eixos para leitura em thumbnail (LinkedIn)
+      x: { grid: { color: '#e4e6f0' }, ticks: { color: '#374151', font: { size: 13, weight: '600' }, maxTicksLimit: 10 } },
+      y: { grid: { color: '#e4e6f0' }, ticks: { color: '#374151', font: { size: 13, weight: '600' } } },
     }
   };
 }
@@ -1374,16 +1378,17 @@ function buildKPIs() {
     const tc    = Math.abs(deltaVal) < 0.5 ? '#4a4f6e' : (tgood ? '#34d399' : '#f87171');
     const ti    = Math.abs(deltaVal) < 0.5 ? '→' : (up ? '↑' : '↓');
     const d = document.createElement('div');
-    d.style.cssText = `background:#0d0f1c;border:1px solid #1a1e35;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden;`;
+    // TESTE: fundo branco + textos maiores/mais escuros para leitura em thumbnail (LinkedIn)
+    d.style.cssText = `background:#fff;border:1px solid #e4e6f0;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:7px;position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);`;
     d.innerHTML = `
-      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:${accentColor};opacity:0.6;"></div>
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${accentColor};opacity:0.9;"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div style="font-size:9px;font-weight:700;color:#8b90b8;text-transform:uppercase;letter-spacing:0.06em;line-height:1.3;">${label}</div>
-        <div style="font-size:18px;opacity:0.7;">${icon}</div>
+        <div style="font-size:11px;font-weight:800;color:#4b5563;text-transform:uppercase;letter-spacing:0.06em;line-height:1.3;">${label}</div>
+        <div style="font-size:20px;opacity:0.9;">${icon}</div>
       </div>
-      <div style="font-size:26px;font-weight:900;color:#e2e4f0;line-height:1;font-family:'JetBrains Mono',monospace;">${value}<span style="font-size:11px;font-weight:400;color:#8b90b8;margin-left:3px;">${unit}</span></div>
-      <div style="font-size:9px;color:#4a4f6e;">${sub}</div>
-      <div style="font-size:10px;font-weight:700;color:${tc};min-height:14px;">${hasDelta ? `${ti} ${Math.abs(deltaVal).toFixed(1)}% <span style="font-weight:400;color:#4a4f6e;">vs período anterior</span>` : ''}</div>`;
+      <div style="font-size:30px;font-weight:900;color:#111827;line-height:1;font-family:'JetBrains Mono',monospace;">${value}<span style="font-size:13px;font-weight:600;color:#6b7280;margin-left:3px;">${unit}</span></div>
+      <div style="font-size:12px;font-weight:600;color:#374151;">${sub}</div>
+      <div style="font-size:12px;font-weight:700;color:${tc};min-height:14px;">${hasDelta ? `${ti} ${Math.abs(deltaVal).toFixed(1)}% <span style="font-weight:500;color:#6b7280;">vs período anterior</span>` : ''}</div>`;
     grid.appendChild(d);
   };
 
@@ -1422,22 +1427,23 @@ function buildKPIs() {
   ];
   const legendHtml = scoreRanges.map(r => {
     const active = score >= r.lo && score <= r.hi;
-    return `<span style="display:inline-flex;align-items:center;gap:3px;font-size:8px;font-weight:${active?'700':'400'};color:${active?r.color:'#4a4f6e'};opacity:${active?1:0.6};">
+    return `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:${active?'700':'500'};color:${active?r.color:'#6b7280'};opacity:${active?1:0.75};">
       <span style="width:6px;height:6px;border-radius:50%;background:${r.color};display:inline-block;"></span>${r.lo}-${r.hi} ${r.label}
     </span>`;
-  }).join('<span style="color:#2a2f4d;">·</span>');
+  }).join('<span style="color:#d1d5db;">·</span>');
   const d = document.createElement('div');
-  d.style.cssText = `background:#0d0f1c;border:1px solid #1a1e35;border-radius:10px;padding:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;position:relative;overflow:hidden;`;
+  // TESTE: fundo branco + textos maiores/mais escuros para leitura em thumbnail (LinkedIn)
+  d.style.cssText = `background:#fff;border:1px solid #e4e6f0;border-radius:10px;padding:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);`;
   d.innerHTML = `
-    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:${scoreColor};opacity:0.7;"></div>
-    <div style="font-size:9px;font-weight:700;color:#8b90b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">HSE Score</div>
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${scoreColor};opacity:0.9;"></div>
+    <div style="font-size:11px;font-weight:800;color:#4b5563;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">HSE Score</div>
     <svg viewBox="0 0 80 44" width="90" height="50">
-      <path d="M8 40 A32 32 0 0 1 72 40" fill="none" stroke="#1a1e35" stroke-width="8" stroke-linecap="round"/>
+      <path d="M8 40 A32 32 0 0 1 72 40" fill="none" stroke="#e4e6f0" stroke-width="8" stroke-linecap="round"/>
       <path d="M8 40 A32 32 0 0 1 72 40" fill="none" stroke="${scoreColor}" stroke-width="8" stroke-linecap="round"
         stroke-dasharray="${score/100*100.5} 100.5" style="transition:stroke-dasharray 1s;"/>
       <text x="40" y="36" text-anchor="middle" font-size="16" font-weight="900" fill="${scoreColor}" font-family="monospace">${score}</text>
     </svg>
-    <div style="font-size:11px;font-weight:700;color:${scoreColor};">${scoreLabel}</div>
+    <div style="font-size:13px;font-weight:800;color:${scoreColor};">${scoreLabel}</div>
     <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:center;margin-top:2px;">${legendHtml}</div>`;
   grid.appendChild(d);
 
@@ -3561,7 +3567,7 @@ function updateBodyMap() {
     const w = Math.round(count / sorted[0][1] * 100);
     return `<div style="margin-bottom:7px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
-        <span style="font-size:10px;color:#c8cbdf;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;">${BODY_PART_LABELS[partId] || partId}</span>
+        <span style="font-size:12px;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;">${BODY_PART_LABELS[partId] || partId}</span>
         <span style="font-size:10px;font-weight:700;color:${color};margin-left:4px;">${count} <span style="color:#4a4f6e;">(${pct}%)</span></span>
       </div>
       <div style="height:4px;background:#1a1e35;border-radius:2px;overflow:hidden;">
@@ -3678,7 +3684,7 @@ function renderAIAnalysisResult(parsed, cachedAt) {
     <div style="display:flex;gap:9px;padding:9px 11px;background:${iBgs[i]};border:1px solid ${iBorders[i]};border-radius:7px;margin-bottom:7px;">
       <div style="font-size:16px;flex-shrink:0;line-height:1.4;">${ins.emoji}</div>
       <div><div style="font-size:11px;font-weight:700;color:${iColors[i]};margin-bottom:2px;">${ins.titulo}</div>
-      <div style="font-size:10px;color:#c8cbdf;line-height:1.5;">${ins.descricao}</div></div>
+      <div style="font-size:12px;color:#374151;line-height:1.5;">${ins.descricao}</div></div>
     </div>`).join('');
 
   // Render recommendations
@@ -3694,7 +3700,7 @@ function renderAIAnalysisResult(parsed, cachedAt) {
         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
       <div><div style="font-size:9px;font-weight:700;color:${cfg.color};margin-bottom:2px;">${cfg.label}</div>
-      <div style="font-size:10px;color:#c8cbdf;line-height:1.5;">${rec.acao}</div></div>
+      <div style="font-size:12px;color:#374151;line-height:1.5;">${rec.acao}</div></div>
     </div>`;
   }).join('');
 }
@@ -3865,7 +3871,7 @@ function generateAIInsightsAuto() {
   const insEl  = document.getElementById('ai-insights-content');
   const recsEl = document.getElementById('ai-recs-content');
   const cta = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:18px 10px;text-align:center;">
-    <div style="font-size:11px;color:#8b90b8;line-height:1.5;">Clique em <strong style="color:#c8cbdf;">"Analisar"</strong> acima para gerar insights e recomendações com base nos dados atuais.</div>
+    <div style="font-size:11px;color:#4b5563;line-height:1.5;">Clique em <strong style="color:#111827;">"Analisar"</strong> acima para gerar insights e recomendações com base nos dados atuais.</div>
   </div>`;
   if (insEl)  insEl.innerHTML  = cta;
   if (recsEl) recsEl.innerHTML = cta;
@@ -3956,7 +3962,7 @@ function generateLocalInsights() {
       <div style="font-size:18px;flex-shrink:0;line-height:1.3;">${ins.emoji}</div>
       <div>
         <div style="font-size:12px;font-weight:700;color:${colors[i]};margin-bottom:2px;">${ins.titulo}</div>
-        <div style="font-size:11px;color:#c8cbdf;line-height:1.5;">${ins.descricao}</div>
+        <div style="font-size:11px;color:#374151;line-height:1.5;">${ins.descricao}</div>
       </div>
     </div>
   `).join('');
@@ -3984,7 +3990,7 @@ function generateLocalRecommendations() {
         </div>
         <div>
           <div style="font-size:10px;font-weight:700;color:${cfg.color};margin-bottom:2px;">${cfg.label}</div>
-          <div style="font-size:11px;color:#c8cbdf;line-height:1.5;">${rec.acao}</div>
+          <div style="font-size:11px;color:#374151;line-height:1.5;">${rec.acao}</div>
         </div>
       </div>`;
   }).join('');
@@ -4251,7 +4257,7 @@ function buildAllHSECharts() {
     });
     // Legend
     const leg = document.getElementById('regional-legend');
-    if (leg) leg.innerHTML = sorted.map(([k,v],i)=>`<div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;border-radius:2px;background:${PALETTE_ALPHA(i,0.9)};flex-shrink:0;"></div><span style="color:#c8cbdf;">${k}</span><span style="margin-left:auto;color:#e2e4f0;font-weight:700;">${v} <span style="color:#4a4f6e;">(${(v/total*100).toFixed(1)}%)</span></span></div>`).join('');
+    if (leg) leg.innerHTML = sorted.map(([k,v],i)=>`<div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;border-radius:2px;background:${PALETTE_ALPHA(i,0.9)};flex-shrink:0;"></div><span style="color:#374151;">${k}</span><span style="margin-left:auto;color:#111827;font-weight:700;">${v} <span style="color:#6b7280;">(${(v/total*100).toFixed(1)}%)</span></span></div>`).join('');
   }
 
   // ── Setor — horizontal bars ───────────────────────────────────
@@ -4276,7 +4282,7 @@ function buildAllHSECharts() {
       options:{ ...d, cutout:'55%' }
     });
     const leg = document.getElementById('turno-legend');
-    if (leg) leg.innerHTML = sorted.map(([k,v],i)=>`<div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;border-radius:2px;background:${PALETTE_ALPHA(i+6,0.9)};flex-shrink:0;"></div><span style="color:#c8cbdf;">${k}</span><span style="margin-left:auto;color:#e2e4f0;font-weight:700;">${v} <span style="color:#4a4f6e;">(${(v/total*100).toFixed(1)}%)</span></span></div>`).join('');
+    if (leg) leg.innerHTML = sorted.map(([k,v],i)=>`<div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;border-radius:2px;background:${PALETTE_ALPHA(i+6,0.9)};flex-shrink:0;"></div><span style="color:#374151;">${k}</span><span style="margin-left:auto;color:#111827;font-weight:700;">${v} <span style="color:#6b7280;">(${(v/total*100).toFixed(1)}%)</span></span></div>`).join('');
   }
 
   // ── Tipo de Acidente — horizontal bars ───────────────────────

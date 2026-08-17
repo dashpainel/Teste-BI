@@ -527,6 +527,16 @@ tailwind.config = {
     Exportar PDF
   </button>
 
+  <div class="section-label">Inteligência</div>
+  <button onclick="runFullAIAnalysis()" id="btn-insights" class="nav-link mx-2 text-left w-auto" style="cursor:pointer;">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    Analisar IA
+  </button>
+  <div class="px-4" style="font-size:11px;color:#4a4f6e;line-height:1.4;">
+    Última atualização<br>
+    <span id="last-update-label" style="color:#8b90b8;">—</span>
+  </div>
+
   <div class="px-4 pt-3 pb-2 border-t" style="border-color:#1a1e35;">
     <button onclick="toggleTheme()" class="nav-link w-full" style="justify-content:center;">
       <svg id="theme-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -768,25 +778,6 @@ tailwind.config = {
     <!-- ════ DASHBOARD HSE UNIFICADO ════ -->
     <!-- ════ DASHBOARD HSE — VISÃO GERAL ════ -->
     <section id="section-dashboard" class="hidden fade-in">
-
-      <!-- ══ HEADER BAR ══ -->
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:#fff;border:1px solid #e4e6f0;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:18px;font-weight:900;color:#111827;letter-spacing:-0.02em;">VISÃO GERAL</div>
-          <div style="font-size:13px;color:#4b5563;margin-top:1px;">Panorama estratégico de Saúde, Segurança e Meio Ambiente</div>
-        </div>
-        <!-- Last update + IA button -->
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-          <div style="font-size:13px;color:#6b7280;text-align:right;">
-            Última atualização<br>
-            <span id="last-update-label" style="color:#4b5563;font-size:12px;">—</span>
-          </div>
-          <button onclick="runFullAIAnalysis()" id="btn-insights" class="btn btn-secondary" style="font-size:13px;padding:5px 10px;gap:5px;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-            Analisar IA
-          </button>
-        </div>
-      </div>
 
       <!-- ══ LINHA 1: 7 KPI CARDS HSE ══ -->
       <div id="kpi-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;"></div>

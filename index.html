@@ -489,6 +489,28 @@ tailwind.config = {
     Tabela de Dados
   </div>
 
+  <div class="section-label">Filtros</div>
+  <div class="px-2" style="display:flex;flex-direction:column;gap:8px;">
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <span style="font-size:11px;color:#8b90b8;text-transform:uppercase;letter-spacing:0.06em;padding:0 2px;">Período</span>
+      <select id="period-filter" class="input" style="font-size:12px;padding:6px 8px;" onchange="applyPeriodFilter()">
+        <option value="all">Todos os registros</option>
+        <option value="week">Esta semana</option>
+        <option value="month">Este mês</option>
+        <option value="quarter">Este trimestre</option>
+        <option value="semester">Este semestre</option>
+        <option value="year">Este ano</option>
+        <option value="last30">Últimos 30 dias</option>
+        <option value="last90">Últimos 90 dias</option>
+        <option value="last180">Últimos 180 dias</option>
+        <option value="last365">Últimos 12 meses</option>
+      </select>
+    </div>
+    <!-- Quick cat filters -->
+    <div id="hse-quick-filters" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <button onclick="clearAllFilters()" class="btn btn-ghost" style="font-size:12px;padding:5px 10px;justify-content:center;">✕ Limpar filtros</button>
+  </div>
+
   <div class="flex-1"></div>
 
   <div class="section-label">Dados</div>
@@ -753,27 +775,6 @@ tailwind.config = {
           <div style="font-size:18px;font-weight:900;color:#111827;letter-spacing:-0.02em;">VISÃO GERAL</div>
           <div style="font-size:13px;color:#4b5563;margin-top:1px;">Panorama estratégico de Saúde, Segurança e Meio Ambiente</div>
         </div>
-        <!-- Period filter -->
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-          <div style="display:flex;flex-direction:column;gap:2px;">
-            <span style="font-size:13px;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em;">Período</span>
-            <select id="period-filter" class="input" style="width:auto;font-size:13px;padding:4px 8px;" onchange="applyPeriodFilter()">
-              <option value="all">Todos os registros</option>
-              <option value="week">Esta semana</option>
-              <option value="month">Este mês</option>
-              <option value="quarter">Este trimestre</option>
-              <option value="semester">Este semestre</option>
-              <option value="year">Este ano</option>
-              <option value="last30">Últimos 30 dias</option>
-              <option value="last90">Últimos 90 dias</option>
-              <option value="last180">Últimos 180 dias</option>
-              <option value="last365">Últimos 12 meses</option>
-            </select>
-          </div>
-          <!-- Quick cat filters -->
-          <div id="hse-quick-filters" style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;"></div>
-          <button onclick="clearAllFilters()" class="btn btn-ghost" style="font-size:13px;padding:5px 10px;align-self:flex-end;">✕ Limpar</button>
-        </div>
         <!-- Last update + IA button -->
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
           <div style="font-size:13px;color:#6b7280;text-align:right;">
@@ -790,7 +791,7 @@ tailwind.config = {
       <!-- ══ LINHA 1: 7 KPI CARDS HSE ══ -->
       <div id="kpi-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;"></div>
 
-      <!-- ══ LINHA 2: Setor + Turno ══ -->
+      <!-- ══ LINHA 2: Setor + Corpo Humano ══ -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
 
         <!-- Acidentes por Setor -->
@@ -799,21 +800,19 @@ tailwind.config = {
           <div style="height:210px;"><canvas id="setorChart"></canvas></div>
         </div>
 
-        <!-- Distribuição por Turno -->
+        <!-- Parte do Corpo Atingida -->
         <div class="card p-3">
-          <div style="font-size:13px;font-weight:700;color:#111827;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Distribuição por Turno</div>
-          <div style="position:relative;height:140px;"><canvas id="turnoChart"></canvas>
-            <div id="turno-center" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
-              <div style="font-size:18px;font-weight:900;color:#111827;" id="turno-total">—</div>
-              <div style="font-size:13px;color:#4b5563;">Total</div>
-            </div>
+          <div style="font-size:13px;font-weight:700;color:#111827;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">Parte do Corpo Atingida</div>
+          <div id="body-map-container" style="display:flex;gap:8px;height:220px;">
+            <div id="body-svg-wrap" style="flex-shrink:0;display:flex;align-items:center;justify-content:center;"></div>
+            <div id="body-legend" style="flex:1;font-size:13px;overflow-y:auto;"></div>
           </div>
-          <div id="turno-legend" style="margin-top:6px;font-size:13px;line-height:1.6;max-height:70px;overflow-y:auto;"></div>
+          <div style="font-size:13px;color:#6b7280;margin-top:4px;" id="body-col-label"></div>
         </div>
       </div>
 
-      <!-- ══ LINHA 3: Tipo Acidente + Corpo Humano + Gravidade + Responsável ══ -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+      <!-- ══ LINHA 3: Tipo Acidente + Turno + Gravidade ══ -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
 
         <!-- Tipo de Acidente -->
         <div class="card p-3">
@@ -828,22 +827,16 @@ tailwind.config = {
           <div style="height:210px;"><canvas id="tipoChart"></canvas></div>
         </div>
 
-        <!-- Parte do Corpo Atingida -->
+        <!-- Distribuição por Turno -->
         <div class="card p-3">
-          <div style="font-size:13px;font-weight:700;color:#111827;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">Parte do Corpo Atingida</div>
-          <div id="body-map-container" style="display:flex;gap:8px;height:220px;">
-            <div id="body-svg-wrap" style="flex-shrink:0;display:flex;align-items:center;justify-content:center;"></div>
-            <div id="body-legend" style="flex:1;font-size:13px;overflow-y:auto;"></div>
+          <div style="font-size:13px;font-weight:700;color:#111827;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Distribuição por Turno</div>
+          <div style="position:relative;height:140px;"><canvas id="turnoChart"></canvas>
+            <div id="turno-center" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
+              <div style="font-size:18px;font-weight:900;color:#111827;" id="turno-total">—</div>
+              <div style="font-size:13px;color:#4b5563;">Total</div>
+            </div>
           </div>
-          <div style="font-size:13px;color:#6b7280;margin-top:4px;" id="body-col-label"></div>
-        </div>
-
-        <!-- Abertura de CAT -->
-        <div class="card p-3">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-            <div style="font-size:13px;font-weight:700;color:#111827;text-transform:uppercase;letter-spacing:0.04em;">Abertura de CAT</div>
-          </div>
-          <div style="height:210px;"><canvas id="catChart"></canvas></div>
+          <div id="turno-legend" style="margin-top:6px;font-size:13px;line-height:1.6;max-height:70px;overflow-y:auto;"></div>
         </div>
 
         <!-- Gravidade -->
@@ -3230,15 +3223,15 @@ function buildHSEQuickFilters() {
     if (vals.length < 2 || vals.length > 30) return;
 
     const wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex;align-items:center;gap:4px;';
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
 
     const lbl = document.createElement('span');
-    lbl.textContent = col + ':';
-    lbl.style.cssText = 'font-size:11px;color:#8b90b8;white-space:nowrap;';
+    lbl.textContent = col;
+    lbl.style.cssText = 'font-size:11px;color:#8b90b8;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px;';
 
     const sel = document.createElement('select');
     sel.className = 'input';
-    sel.style.cssText = 'width:auto;font-size:11px;padding:4px 8px;';
+    sel.style.cssText = 'width:100%;font-size:12px;padding:6px 8px;';
     sel.dataset.col = col;
     sel.innerHTML = `<option value="">Todos</option>` + vals.map(v => `<option value="${v}">${v}</option>`).join('');
     sel.onchange = () => {
@@ -4175,24 +4168,6 @@ function toggleChartType(canvasId, btnContainerId, clickedBtn, newType) {
   buildHSECatChart(canvasId, actualCol, newType, cfg?.colors||0);
 }
 
-function buildCATChart() {
-  if (hseCharts['catChart']) { hseCharts['catChart'].destroy(); delete hseCharts['catChart']; }
-  const canvas = document.getElementById('catChart');
-  if (!canvas || !state.raw.length) return;
-  const col = findColumn(['cat','comunicação','comunicacao','abertura','notificação','boletim','registro']);
-  if (!col) { canvas.closest('.card').querySelector('div:first-child').innerHTML += ' <span style="font-size:9px;color:#4a4f6e;">(col. não encontrada)</span>'; return; }
-  const source = state.filtered.length ? state.filtered : state.raw;
-  const grouped = {};
-  source.forEach(r => { const v=String(r[col]||'(vazio)').trim(); grouped[v]=(grouped[v]||0)+1; });
-  const sorted = Object.entries(grouped).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  const d = chartDefaults(); d.plugins.legend.display=false; d.indexAxis='y';
-  hseCharts['catChart'] = new Chart(canvas.getContext('2d'), {
-    type:'bar',
-    data:{ labels:sorted.map(([k])=>k), datasets:[{ data:sorted.map(([,v])=>v), backgroundColor:sorted.map((_,i)=>PALETTE_ALPHA(i+5,0.8)), borderRadius:3 }] },
-    options:d
-  });
-}
-
 function buildDiasAfastamentCard() { buildDiasAfastamentoCard(); } // alias
 
 function buildDiasAfastamentoCard() {
@@ -4334,9 +4309,6 @@ function buildAllHSECharts() {
   buildHSECatChart('gravidadeChart', colGrav, 'bar', 10);
   const gravBtns = document.getElementById('gravidade-btns');
   if (gravBtns && colGrav) gravBtns.dataset.col = colGrav;
-
-  // ── Abertura de CAT — bars ────────────────────────────────────
-  buildCATChart();
 
   // ── Unidade — horizontal bars ─────────────────────────────────
   const colUnid = findColumn(['unidade','planta','local','filial','site']);

@@ -2006,46 +2006,179 @@ function exportExcel() {
 }
 
 // ─── EXPORT PDF ───────────────────────────────────────────────────
-function exportPDF() {
+// Gera um PDF que reproduz visualmente o painel (KPIs + gráficos), como se
+// fosse uma "impressão" dos indicadores — em vez de apenas despejar a tabela
+// de dados crua. Os gráficos são capturados a partir dos <canvas> já
+// renderizados na tela (Chart.js) e o mapa corporal a partir do <svg>.
+async function exportPDF() {
   if (!state.filtered.length) { alert('Carregue dados primeiro.'); return; }
+
+  // Canvas com display:none captura em branco — se o usuário estiver em
+  // outra aba (Importar/Tabela), troca temporariamente para o Dashboard,
+  // força os gráficos a recalcular o tamanho, e volta pra aba original no final.
+  const wasHidden = document.getElementById('section-dashboard').classList.contains('hidden');
+  const prevSection = sections.find(s => document.getElementById('nav-'+s)?.classList.contains('active'));
+  if (wasHidden) {
+    showSection('dashboard');
+    try { rebuildAllCharts(); buildForecast(); buildKPIs(); } catch(e) {}
+    await new Promise(r => setTimeout(r, 350));
+  }
+
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+  const PW = 297, PH = 210, M = 14;
 
-  // Header
-  doc.setFillColor(9,10,20);
-  doc.rect(0,0,297,20,'F');
-  doc.setTextColor(77,122,255);
-  doc.setFontSize(16); doc.setFont('helvetica','bold');
-  doc.text('Dashboards', 14, 13);
-  doc.setTextColor(180,180,200);
-  doc.setFontSize(9); doc.setFont('helvetica','normal');
-  doc.text(`Exportado em ${new Date().toLocaleString('pt-BR')}  ·  ${state.fileName}`, 14, 18);
-  doc.text(`${fmt(state.filtered.length)} registros  ·  ${state.headers.length} colunas`, 297-14, 18, {align:'right'});
+  const canvasImg = (id) => {
+    const c = document.getElementById(id);
+    if (!c || !c.width || !c.height) return null;
+    try { return { data: c.toDataURL('image/png', 1.0), w: c.width, h: c.height }; } catch(e) { return null; }
+  };
 
-  // KPI summary
-  doc.setTextColor(40,40,80);
-  doc.setFontSize(10); doc.setFont('helvetica','bold');
-  doc.text('Resumo de KPIs', 14, 30);
-
-  const kpiData = state.numCols.slice(0,6).map(col=>{
-    const vals=state.filtered.map(r=>getNum(r,col)).filter(v=>!isNaN(v));
-    const sum=vals.reduce((a,b)=>a+b,0);
-    return [col, fmt(sum,2), fmt(vals.length?sum/vals.length:0,2), fmt(vals.length?Math.max(...vals):0,2), fmt(vals.length?Math.min(...vals):0,2), fmt(vals.length)];
-  });
-  doc.autoTable({
-    head:[['Coluna','Total','Média','Máximo','Mínimo','Registros']],
-    body: kpiData,
-    startY: 34, margin:{left:14,right:14},
-    headStyles:{fillColor:[41,82,245],textColor:255,fontStyle:'bold',fontSize:8},
-    bodyStyles:{fontSize:8,textColor:[40,40,80]},
-    alternateRowStyles:{fillColor:[245,246,250]},
-    theme:'grid',
+  const svgImg = (wrapId, scale=3) => new Promise(resolve => {
+    const wrap = document.getElementById(wrapId);
+    const svg = wrap?.querySelector('svg');
+    if (!svg) return resolve(null);
+    const vb = svg.viewBox && svg.viewBox.baseVal;
+    const w = (vb && vb.width) || (svg.width && svg.width.baseVal.value) || 130;
+    const h = (vb && vb.height) || (svg.height && svg.height.baseVal.value) || 310;
+    const xml = new XMLSerializer().serializeToString(svg);
+    const b64 = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(xml)));
+    const img = new Image();
+    img.onload = () => {
+      const cv = document.createElement('canvas');
+      cv.width = w*scale; cv.height = h*scale;
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cv.width,cv.height);
+      ctx.drawImage(img, 0, 0, cv.width, cv.height);
+      resolve({ data: cv.toDataURL('image/png'), w: cv.width, h: cv.height });
+    };
+    img.onerror = () => resolve(null);
+    img.src = b64;
   });
 
-  // Data table
-  const startY = doc.lastAutoTable.finalY + 8;
+  const drawImageBox = (img, x, y, boxW, boxH) => {
+    if (!img) {
+      doc.setFontSize(8); doc.setTextColor(180); doc.setFont('helvetica','italic');
+      doc.text('Gráfico não disponível', x+boxW/2, y+boxH/2, {align:'center'});
+      return;
+    }
+    const ratio = Math.min(boxW / img.w, boxH / img.h);
+    const w = img.w*ratio, h = img.h*ratio;
+    doc.addImage(img.data, 'PNG', x + (boxW-w)/2, y + (boxH-h)/2, w, h);
+  };
+
+  const cardBox = (x, y, w, h, title) => {
+    doc.setDrawColor(228,230,240);
+    doc.setFillColor(255,255,255);
+    doc.roundedRect(x, y, w, h, 2, 2, 'FD');
+    if (title) {
+      doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(17,24,39);
+      doc.text(title, x+4, y+7);
+    }
+  };
+
+  const footer = () => {
+    doc.setFontSize(8); doc.setTextColor(150); doc.setFont('helvetica','normal');
+    doc.text(`Página ${doc.internal.getCurrentPageInfo().pageNumber}`, PW-M, PH-8, {align:'right'});
+  };
+
+  // ── PÁGINA 1: cabeçalho + KPIs + gráficos principais ─────────────
+  doc.setFillColor(13,15,28); doc.rect(0,0,PW,20,'F');
+  doc.setTextColor(77,122,255); doc.setFontSize(16); doc.setFont('helvetica','bold');
+  doc.text('Dashboards', M, 13);
+  doc.setTextColor(180,180,200); doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text(`Exportado em ${new Date().toLocaleString('pt-BR')}  ·  ${state.fileName}`, M, 18);
+  doc.text(`${fmt(state.filtered.length)} registros  ·  ${state.headers.length} colunas`, PW-M, 18, {align:'right'});
+
   doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(40,40,80);
-  doc.text('Dados', 14, startY);
+  doc.text('Resumo de Indicadores', M, 28);
+
+  const kpiEls = [...document.querySelectorAll('#kpi-grid > div')].slice(0,8);
+  const kpiGap = 4, kpiCols = 4;
+  const kpiW = (PW - 2*M - (kpiCols-1)*kpiGap) / kpiCols;
+  const kpiH = 22;
+  const kpiTop = 31;
+  kpiEls.forEach((el, i) => {
+    const col = i % kpiCols, row = Math.floor(i/kpiCols);
+    const x = M + col*(kpiW+kpiGap), y = kpiTop + row*(kpiH+kpiGap);
+    const label = el.children[1]?.children[0]?.textContent?.trim() || '';
+    const valueEl = el.children[2];
+    const value = valueEl ? (valueEl.childNodes[0]?.textContent || '').trim() : '';
+    const unit = valueEl?.querySelector('span')?.textContent?.trim() || '';
+    const sub = el.children[3]?.textContent?.trim() || '';
+    doc.setFillColor(245,246,250); doc.roundedRect(x, y, kpiW, kpiH, 1.5, 1.5, 'F');
+    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(107,114,128);
+    doc.text(label.toUpperCase(), x+3, y+6, { maxWidth: kpiW-6 });
+    doc.setFontSize(15); doc.setFont('helvetica','bold'); doc.setTextColor(17,24,39);
+    doc.text(`${value}${unit?(' '+unit):''}`, x+3, y+14);
+    doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(75,85,99);
+    doc.text(sub, x+3, y+19, { maxWidth: kpiW-6 });
+  });
+  const kpiRows = Math.ceil(kpiEls.length / kpiCols) || 1;
+  let cy = kpiTop + kpiRows*(kpiH+kpiGap) + 3;
+
+  // ── Setor + Parte do Corpo ────────────────────────────────────
+  const rowH1 = 62;
+  const halfW = (PW - 2*M - 4) / 2;
+  cardBox(M, cy, halfW, rowH1, 'Acidentes por Setor');
+  drawImageBox(canvasImg('setorChart'), M+3, cy+9, halfW-6, rowH1-12);
+
+  const corpoX = M + halfW + 4;
+  cardBox(corpoX, cy, halfW, rowH1, 'Parte do Corpo Atingida');
+  const bodySvg = await svgImg('body-svg-wrap');
+  const bodyBoxW = halfW*0.4;
+  drawImageBox(bodySvg, corpoX+3, cy+9, bodyBoxW, rowH1-12);
+  const legendItems = [...document.querySelectorAll('#body-legend > div')].slice(0,7);
+  doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(55,65,81);
+  legendItems.forEach((it, i) => {
+    const row = it.children[0];
+    const labelTxt = row?.children[0]?.textContent?.trim() || '';
+    const countSpan = row?.children[1];
+    const countTxt = countSpan ? (countSpan.childNodes[0]?.textContent || '').trim() : '';
+    const pctTxt = countSpan?.querySelector('span')?.textContent?.trim() || '';
+    const txt = `${labelTxt}  ${countTxt} ${pctTxt}`.replace(/\s+/g,' ').trim();
+    doc.text(txt, corpoX + bodyBoxW + 8, cy + 14 + i*6, { maxWidth: halfW - bodyBoxW - 12 });
+  });
+
+  cy += rowH1 + 5;
+
+  // ── Tipo + Turno + Gravidade ──────────────────────────────────
+  const rowH2 = 55;
+  const thirdW = (PW - 2*M - 2*4) / 3;
+  [
+    { id:'tipoChart', title:'Tipo de Acidente' },
+    { id:'turnoChart', title:'Distribuição por Turno' },
+    { id:'gravidadeChart', title:'Gravidade' },
+  ].forEach((c, i) => {
+    const x = M + i*(thirdW+4);
+    cardBox(x, cy, thirdW, rowH2, c.title);
+    drawImageBox(canvasImg(c.id), x+3, cy+9, thirdW-6, rowH2-12);
+  });
+  cy += rowH2 + 5;
+
+  // ── Unidade ─────────────────────────────────────────────────
+  const rowH3 = 55;
+  if (cy + rowH3 < PH - 12) {
+    cardBox(M, cy, PW-2*M, rowH3, 'Acidentes por Unidade');
+    drawImageBox(canvasImg('unidadeChart'), M+3, cy+9, PW-2*M-6, rowH3-12);
+  }
+  footer();
+
+  // ── PÁGINA 2: Histórico + Projeção e Dados ────────────────────
+  doc.addPage();
+  doc.setFillColor(13,15,28); doc.rect(0,0,PW,14,'F');
+  doc.setTextColor(77,122,255); doc.setFontSize(12); doc.setFont('helvetica','bold');
+  doc.text('Dashboards — Histórico e Dados', M, 9.5);
+
+  doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(40,40,80);
+  doc.text('Histórico + Projeção', M, 22);
+  const fcH = 55;
+  cardBox(M, 25, PW-2*M, fcH, '');
+  drawImageBox(canvasImg('forecastChart'), M+3, 28, PW-2*M-6, fcH-6);
+
+  const startY = 25 + fcH + 8;
+  doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(40,40,80);
+  doc.text('Dados', M, startY);
 
   const slice = state.filtered.slice(0, 200);
   doc.autoTable({
@@ -2055,16 +2188,15 @@ function exportPDF() {
       if(v instanceof Date) return v.toLocaleDateString('pt-BR');
       return String(v||'');
     })),
-    startY: startY+4, margin:{left:14,right:14},
+    startY: startY+4, margin:{left:M,right:M},
     headStyles:{fillColor:[19,22,41],textColor:[140,144,184],fontStyle:'bold',fontSize:7},
     bodyStyles:{fontSize:7,textColor:[50,50,80]},
     alternateRowStyles:{fillColor:[248,249,252]},
     theme:'striped',
-    didDrawPage: (data) => {
-      doc.setFontSize(8); doc.setTextColor(150);
-      doc.text(`Página ${doc.internal.getCurrentPageInfo().pageNumber}`, 297-14, 205, {align:'right'});
-    }
+    didDrawPage: () => footer(),
   });
+
+  if (wasHidden && prevSection) showSection(prevSection);
 
   doc.save((state.fileName.replace(/\.[^.]+$/,'')||'painel-hse')+'-relatorio.pdf');
 }
